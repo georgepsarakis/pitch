@@ -12,7 +12,6 @@ pitch
 * [BeautifulSoup4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 * [gevent](http://www.gevent.org/)
 * [requests](http://docs.python-requests.org/en/latest/)
-*
 
 ### Optional
 * [tabulate](https://pypi.python.org/pypi/tabulate)
