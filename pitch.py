@@ -8,7 +8,10 @@ import re
 import requests
 from time import time, sleep
 from functools import partial
-from tabulate import tabulate
+try:
+  from tabulate import tabulate
+except ImportError:
+  tabulate = None
 import signal
 import random
 try:
