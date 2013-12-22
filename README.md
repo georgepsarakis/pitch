@@ -47,15 +47,16 @@ pitch
                         content.
   -M {GET,POST}, --method {GET,POST}
                         GET/POST method.
-
 ```
 
 ### Examples
 
-* Fetch URL contents 
+#### Fetch URL contents 
+
 ```
 $ pitch -U example.com
 ```
+
 > HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. Perhaps a `--raw` option should be added to display actual content in the future.
 
 ## Future To-Dos
