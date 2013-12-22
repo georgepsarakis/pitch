@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='pitch',
       version='1.0',
@@ -14,6 +14,6 @@ setup(name='pitch',
         ],
       entry_points={
         'console_scripts': [
-          'pitch = pitch.main:main',
+          'pitch = pitch:main',
         ]
       })

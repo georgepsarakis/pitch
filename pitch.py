@@ -117,7 +117,7 @@ class Pitch(object):
       print "\n".join([ h.ljust(max(map(len, header))) for h in header ])
   
   @staticmethod
-  def parameterizer(**kwargs):
+  def parameterizer(**kwargs):   
     if kwargs:
       ''' temporary copy of sys.argv '''
       sys_argv = sys.argv[:]
@@ -126,12 +126,18 @@ class Pitch(object):
         if isinstance(v, list):
           v = ' '.join(v)
         sys.argv.append('--%s=%s' % (k, v))
-      ''' restore original command line parameters '''
-      sys.argv = sys_argv[:]
+    else:
+      ''' display help when empty '''
+      if len(sys.argv) <= 1:
+        sys.argv.append('-h')
     optparser = argparse.ArgumentParser('pitch - URL Fetching & Benchmarking Tool')
     for switch, parameters in arguments.iteritems():
       optparser.add_argument('-%s' % parameters[0], '--%s' % switch, **parameters[1])
-    return optparser.parse_args()
+    parameters = optparser.parse_args()
+    if kwargs:
+      ''' restore original command line parameters '''
+      sys.argv = sys_argv[:]
+    return parameters
 
   def __process_parameters(self):
     self.PARAMETERS.method = self.PARAMETERS.method.lower()
@@ -317,8 +323,12 @@ class Pitch(object):
       print "WARNING: %s" % message
     elif level == self.INFO:
       print "INFO: %s" % message
-    
-if __name__ == "__main__":
+
+''' wrapper function for entry point '''
+def main():
   P = Pitch(Pitch.parameterizer())
   signal.signal(signal.SIGTERM, P.terminate)
-  P.run()
+  P.run()  
+
+if __name__ == "__main__":
+  main()
