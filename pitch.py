@@ -1,13 +1,22 @@
 #!/usr/bin/python
-from gevent import monkey
-monkey.patch_socket()
-import gevent
+try:
+  from gevent import monkey
+  monkey.patch_socket()
+  import gevent
+except ImportError:
+  gevent = None
 import os
 import sys
 import re
 import requests
 from time import time, sleep
 from functools import partial
+from itertools import imap
+import argparse
+try:
+  import yaml
+except ImportError:
+  yaml = None
 try:
   from tabulate import tabulate
 except ImportError:
@@ -23,10 +32,26 @@ try:
 except ImportError:
   import json
 
+arguments = {
+  'profile'  : ( 'P', { 'help' : 'Store & display profiling data for the requests.', 'action' : 'store_true', 'default' : False } ),
+  'time'     : ( 'B', { 'help' : 'Duration of benchmark (in sec). Default is 60. Use combined with -p/--profile.', 'type' : float, 'default': 60.}),
+  'threads'  : ( 'T', { 'help' : 'Number of parallel threads.', 'default': 1, 'type': int}),
+  'delay'    : ( 'D', { 'help' : 'Delay between requests in msec.', 'type': float, 'default': 0.}),
+  'url'      : ( 'U', { 'help' : 'URL to process. You can enter multiple values.', 'nargs': '*'}),
+  'url-file' : ( 'F', { 'help' : 'Files with URLs to process. You can enter multiple values.', 'nargs': '*', 'default': None}),
+  'timeout'  : ( 'X', { 'help' : 'Request timeout in seconds.', 'type': float, 'default': 2.}),
+  'elements' : ( 'E', { 'help': 'CSS selectors of elements in requested pages to be returned in STDOUT.', 'nargs': '*', 'default': None}),
+  'method'   : ( 'M', { 'help': 'GET/POST method.', 'default': 'GET', 'choices': ['GET', 'POST']}),
+  'auth'     : ( 'A', { 'help': "Basic Authentication username:password (e.g. -A 'george:superpass')", 'default': None}),
+  'output'   : ( 'O', { 'help': 'Output format - benchmarking results & element content.', 'choices': ['plain','json'], 'default': 'plain'}),
+  'verbose'  : ( 'v', { 'help': 'Verbosity', 'action': 'count', 'default': 0}),
+}
+
 class Pitch(object):
-  Pitcher   = None
-  TERMINATE = False
-  METRICS    = {
+  TERMINATE             = False
+  PROGRESS_INTERVAL     = 1.
+  PROGRESS_LAST_PRINTED = None
+  METRICS = {
     'ok'       : { 
       'label' : 'Successful',
       'unit'  : '',
@@ -64,23 +89,23 @@ class Pitch(object):
       'unit'  : 'KB',
       }
   }     
-  ELEMENTS = {} 
   ERROR = 0
   WARN  = 1 
   INFO  = 2
-  def __init__(self, parameters):
+  def __init__(self, parameters=None, **kwargs):
     self.URLS = []
+    if parameters is None:
+      parameters = Pitch.parameterizer(**kwargs)
     self.PARAMETERS = parameters
     self.__process_parameters()
-    self.pitcher = partial(getattr(requests, self.PARAMETERS.method), timeout=self.PARAMETERS.timeout)
+    if not self.PARAMETERS.auth is None:
+      R = requests.Session()
+      R.auth = tuple(self.PARAMETERS.auth.split(':'))
+    else:
+      R = requests
+    self.pitcher = partial(getattr(R, self.PARAMETERS.method), timeout=self.PARAMETERS.timeout, verify=False)
     self.STATS = {}
-    if not self.PARAMETERS.url is None:
-      self.URLS.extend(self.PARAMETERS.url)
-    if not self.URLS:
-      raise Exception('No URL supplied. Use --url or/and --url-file parameters.')
-    for index, url in enumerate(self.URLS):
-      if re.match(r'^http:', url) is None:
-        self.URLS[index] = 'http://%s' % url
+    self.ELEMENTS = {} 
     if self.PARAMETERS.verbose > 0:
       header = [ "****  pitch v1.0 ****" ]
       header.append('Initializing with:')
@@ -88,15 +113,38 @@ class Pitch(object):
       header.append('- Threads  : %d' % self.PARAMETERS.threads)
       header.append('- Timeout  : %d' % self.PARAMETERS.timeout)
       header.append('- Duration : %d' % self.PARAMETERS.time)
-      header.append('- Elements : %s' % self.PARAMETERS.element)
+      header.append('- Elements : %s' % self.PARAMETERS.elements)
       print "\n".join([ h.ljust(max(map(len, header))) for h in header ])
+  
+  @staticmethod
+  def parameterizer(**kwargs):
+    if kwargs:
+      ''' temporary copy of sys.argv '''
+      sys_argv = sys.argv[:]
+      sys.argv = []
+      for k, v in kwargs:
+        if isinstance(v, list):
+          v = ' '.join(v)
+        sys.argv.append('--%s=%s' % (k, v))
+      ''' restore original command line parameters '''
+      sys.argv = sys_argv[:]
+    optparser = argparse.ArgumentParser('pitch - URL Fetching & Benchmarking Tool')
+    for switch, parameters in arguments.iteritems():
+      optparser.add_argument('-%s' % parameters[0], '--%s' % switch, **parameters[1])
+    return optparser.parse_args()
 
   def __process_parameters(self):
     self.PARAMETERS.method = self.PARAMETERS.method.lower()
     if not self.PARAMETERS.method in ['get','post']:
       self.PARAMETERS.method = 'get'
+    if self.PARAMETERS.delay > 0.:
+      self.PARAMETERS.delay /= 1000.
     if self.PARAMETERS.threads < 1:
       self.PARAMETERS.threads = 1
+    if not self.PARAMETERS.profile and self.PARAMETERS.elements is None:
+      self.PARAMETERS.elements = ['html']
+    if not self.PARAMETERS.url is None:
+      self.URLS.extend(self.PARAMETERS.url)
     if not self.PARAMETERS.url_file is None:
       for filename in self.PARAMETERS.url_file:     
         if os.path.exists(filename):
@@ -104,6 +152,19 @@ class Pitch(object):
             self.URLS.extend(f.readlines())
         else:
           self.log("File %s does not exist, ignored." % filename, self.WARN)
+    if not self.URLS:
+      raise Exception('No URL supplied. Use --url or/and --url-file parameters.')
+    self.URLS = map(self.url_normalizer, self.URLS)
+ 
+  def url_normalizer(self, url):
+    url = url.strip()
+    if re.match(r'^http:', url) is None:      
+      url = 'http://%s' % url
+    return url
+ 
+  def delayer(self):
+    if self.PARAMETERS.delay > 0:
+      sleep(self.PARAMETERS.delay)
 
   def run(self):
     try:
@@ -134,9 +195,7 @@ class Pitch(object):
       labels = self.METRICS.keys()
       output = []
       for url, stats in self.STATS.iteritems():
-        for k in labels:
-          if not k in stats:
-            stats[k] = 0
+        stats = dict([(k,0) for k in labels] + stats.items())
         stats['avg'] = stats['total']/stats['time']
         stats['avg-size'] = stats['size']/stats['ok']/1024.
         stats['size'] /= 1024.       
@@ -150,8 +209,12 @@ class Pitch(object):
         elif self.PARAMETERS.output == "json":
           output.append({ url : table })
       print printer(output)
-    if not self.PARAMETERS.element is None:
-      print printer(self.ELEMENTS)
+    if not self.PARAMETERS.elements is None:
+      if self.PARAMETERS.output == "json":
+        elements = self.ELEMENTS
+      elif self.PARAMETERS.output == "plain":
+        elements = [ "\n".join(self.ELEMENTS[url][selector]) for url, selectors in self.ELEMENTS.iteritems() for selector in selectors ]       
+      print printer(elements)
                
   def fetcher(self, url):
     start = time()
@@ -163,15 +226,13 @@ class Pitch(object):
     return url, request, request_time
   
   def fetch_element(self, html):
-    if not self.PARAMETERS.element is None:
-      try:
-        tree = bs(html, "lxml")
-        elements = {}
-        for selector in self.PARAMETERS.element:        
-          elements[selector] = map(unicode, tree.select(selector))
-        return elements
-      except:
-        return {}
+    if not self.PARAMETERS.elements is None:
+      tree = bs(html, "lxml")
+      elements = {}
+      for selector in self.PARAMETERS.elements:        
+        elements[selector] = map(unicode, tree.select(selector))
+      return elements
+    return {}
    
   def incr(self, obj, key, value=1):
     try:
@@ -179,42 +240,46 @@ class Pitch(object):
     except KeyError:
       obj[key] = value
     return obj[key]
+  
+  def progress(self, counter, start):
+    if self.PROGRESS_LAST_PRINTED is None:
+      self.PROGRESS_LAST_PRINTED = time()
+    if self.PARAMETERS.verbose >= 1 and self.PARAMETERS.time > 0:
+      if time() - self.PROGRESS_LAST_PRINTED >= self.PROGRESS_INTERVAL:
+        self.PROGRESS_LAST_PRINTED = time()
+        message = ">> %d REQUESTS (%d%%)" % (counter * self.PARAMETERS.threads, int(100*(time()-start)/self.PARAMETERS.time))
+        sys.stdout.write(message)
+        sys.stdout.flush()
+        sys.stdout.write('\b' * len(message))
+    counter += 1
+    return counter
    
   def looper(self):
+    counter = 0
     start = time()
     profile = self.PARAMETERS.profile
     if not profile:
       duration = 0
     else:
       duration = self.PARAMETERS.time
-    counter = 0
-    request_factor = 1
-    if self.PARAMETERS.threads > 1:
-      request_factor = self.PARAMETERS.threads
-    INTERVAL = 1.
-    printed = time()
     while not self.TERMINATE and ( time() - start < duration or duration == 0):
-      if self.PARAMETERS.verbose >= 1 and duration > 0 and time() - printed >= INTERVAL:
-        printed = time()
-        message = ">> %d REQUESTS (%d%%)" % (counter * request_factor, int(100*(time()-start)/duration))
-        sys.stdout.write(message)
-        sys.stdout.flush()
-        sys.stdout.write('\b' * len(message))
-      counter += 1
+      counter = self.progress(counter, start)
       results = []
       if self.PARAMETERS.threads > 1:
-        urls = (random.choice(self.URLS) for n in xrange(self.PARAMETERS.threads))
+        if profile:
+          urls = (random.choice(self.URLS) for n in xrange(self.PARAMETERS.threads))
+        else:
+          urls = self.URLS
         threads = [ gevent.spawn(self.fetcher, url) for url in urls ]
         timeout = duration - time() + start
         if timeout < self.PARAMETERS.timeout:
           timeout = self.PARAMETERS.timeout
         gevent.joinall(threads, timeout=timeout)
-        results = [ _.value for _ in threads if _.successful ]
+        results = (_.value for _ in threads if not _ is None and  _.successful)
       else:
-        results = [ self.fetcher(url) for url in self.URLS ]
-      if not self.PARAMETERS.element is None:
-        for url, request, request_time in results:
-          self.ELEMENTS[url] = self.fetch_element(request.content) 
+        results = filter(None, map(self.fetcher, self.URLS))
+      if not self.PARAMETERS.elements is None:
+        self.ELEMENTS.update(dict(zip([ r[0] for r in results ], map(self.fetch_element, [ r[1].content for r in results ]))))
       if profile:
         for url, request, request_time in results:
           try:
@@ -239,6 +304,7 @@ class Pitch(object):
             self.incr(stats, 'error')              
       if duration == 0: 
         break
+      self.delayer()
     sys.stdout.flush()
   
   def terminate(self, signum, frame):
@@ -253,20 +319,6 @@ class Pitch(object):
       print "INFO: %s" % message
     
 if __name__ == "__main__":
-  import argparse
-  optparser = argparse.ArgumentParser('pitch - URL Fetching & Benchmarking Tool')
-  optparser.add_argument('-p', '--profile',  help='Store profiling data for the requests.', action='store_true', default=False)
-  optparser.add_argument('-b', '--time',     help='Duration of benchmark (in sec). Default is 60. Use combined with -p/--profile.', type=float, default=60.)
-  optparser.add_argument('-t', '--threads',  help='Number of parallel threads.', default=0, type=int)
-  optparser.add_argument('-d', '--delay',    help='Delay between requests in msec.', type=float, default=0.)
-  optparser.add_argument('-u', '--url',      help='URL to process. You can enter multiple values.', nargs='*')
-  optparser.add_argument('-f', '--url-file', help='Files with URLs to process. You can enter multiple values.', nargs='*', default=None)
-  optparser.add_argument('-X', '--timeout',  help='Request timeout in seconds.', type=float, default=2.)
-  optparser.add_argument('-e', '--element',  help='CSS selectors of elements in requested pages to be returned in STDOUT in JSON format.', nargs='*', default=None)
-  optparser.add_argument('-m', '--method',   help='GET/POST method.', default='GET')
-  optparser.add_argument('-o', '--output',   help='Output format - benchmarking results & element content.', choices=['plain','json'], default='plain')
-  optparser.add_argument('-v', '--verbose',  help='Verbosity', action='count', default=0)
-  parameters = optparser.parse_args()
-  P = Pitch(parameters)
+  P = Pitch(Pitch.parameterizer())
   signal.signal(signal.SIGTERM, P.terminate)
   P.run()
