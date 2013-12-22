@@ -25,27 +25,22 @@ pitch
 ```
   -P, --profile         Store & display profiling data for the requests.
   -E [ELEMENTS [ELEMENTS ...]], --elements [ELEMENTS [ELEMENTS ...]]
-                        CSS selectors of elements in requested pages to be
-                        returned in STDOUT.
+                        CSS selectors of elements in requested pages to be returned in STDOUT.
   -v, --verbose         Verbosity
-  -A AUTH, --auth AUTH  Basic Authentication username:password (e.g. -A
-                        'george:superpass')
+  -A AUTH, --auth AUTH  Basic Authentication username:password (e.g. -A 'george:superpass')
   -T THREADS, --threads THREADS
                         Number of parallel threads.
   -U [URL [URL ...]], --url [URL [URL ...]]
                         URL to process. You can enter multiple values.
   -F [URL_FILE [URL_FILE ...]], --url-file [URL_FILE [URL_FILE ...]]
-                        Files with URLs to process. You can enter multiple
-                        values.
+                        Files with URLs to process. You can enter multiple values.
   -D DELAY, --delay DELAY
                         Delay between requests in msec.
   -X TIMEOUT, --timeout TIMEOUT
                         Request timeout in seconds.
-  -B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. Use
-                        combined with -p/--profile.
+  -B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. Use combined with -p/--profile.
   -O {plain,json}, --output {plain,json}
-                        Output format - benchmarking results & element
-                        content.
+                        Output format for benchmarking results & element content.
   -M {GET,POST}, --method {GET,POST}
                         GET/POST method.
 ```
@@ -105,5 +100,6 @@ A single URL would result in 20 concurrent requests.
 
 * Configuration file support.
 * POST payload in requests.
-* Redis support - specify keys instead of URLs. Redis can also contain the POST payload, instead of using files.
+* Redis support - specify keys instead of URLs. 
+  Redis can also contain the POST payload, instead of using files.
 * Session support
