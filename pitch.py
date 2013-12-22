@@ -229,6 +229,7 @@ class Pitch(object):
     except requests.ConnectionError:
       request = None
     request_time = time() - start
+    self.delayer()
     return url, request, request_time
   
   def fetch_element(self, html):
@@ -310,7 +311,6 @@ class Pitch(object):
             self.incr(stats, 'error')              
       if duration == 0: 
         break
-      self.delayer()
     sys.stdout.flush()
   
   def terminate(self, signum, frame):
