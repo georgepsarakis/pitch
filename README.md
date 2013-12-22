@@ -57,7 +57,8 @@ pitch
 $ pitch -U example.com
 ```
 
-> HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. Perhaps a `--raw` option should be added to display actual content in the future.
+> HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. 
+> Perhaps a `--raw` option should be added to display actual content in the future.
 
 ## Future To-Dos
 
