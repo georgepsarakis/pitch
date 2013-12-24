@@ -13,6 +13,7 @@ pitch
 * [gevent](http://www.gevent.org/)
 * [requests](http://docs.python-requests.org/en/latest/)
 * [argparse](http://docs.python.org/2.7/library/argparse.html)
+* [PyYAML](https://pypi.python.org/pypi/PyYAML)
 
 ### Optional
 * [tabulate](https://pypi.python.org/pypi/tabulate)
@@ -95,6 +96,22 @@ Thus, concurrency is approximately 10.
 A single URL would result in 20 concurrent requests.
 
 > Benchmark time is approximate and could be off by `timeout` seconds.
+
+#### Configuration files
+
+```
+$ pitch -C config.yml
+```
+
+Configuration files are composed with the following 1-st level keys:
+
+1. `headers`
+    Dictionary of valid HTTP header field names and their corresponding values.
+2. `settings`
+    Dictionary of the command line parameters (see the [sample file](https://github.com/georgepsarakis/pitch/blob/master/sample.yml#L6)). If the same parameter is passed from the command-line it overrides the settings. 
+3. `urls`
+    A list of dictionaries where the `url` key is required and optionally the `data` key contains a dictionary with the POST/GET payload. Parameters values should not be URL-encoded.
+    `--url` and `--url-file` parameters are added to those in the configuration file and not overridden.
 
 ## Future To-Dos
 
