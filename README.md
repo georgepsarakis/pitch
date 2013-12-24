@@ -123,6 +123,5 @@ Configuration files are composed with the following 1st level keys:
 * Configuration file support.
 * POST payload in requests.
 * Redis support - specify keys instead of URLs. 
-
   Redis can also contain the POST payload, instead of using files.
 * Session support
