@@ -39,7 +39,8 @@ pitch
                         Delay between requests in msec.
   -X TIMEOUT, --timeout TIMEOUT
                         Request timeout in seconds.
-  -B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. Use combined with -p/--profile.
+  -B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. 
+                        Use combined with -p/--profile.
   -O {plain,json}, --output {plain,json}
                         Output format for benchmarking results & element content.
   -M {GET,POST}, --method {GET,POST}
@@ -103,7 +104,7 @@ A single URL would result in 20 concurrent requests.
 $ pitch -C config.yml
 ```
 
-Configuration files are composed with the following 1-st level keys:
+Configuration files are composed with the following 1st level keys:
 
 1. `headers`
     Dictionary of valid HTTP header field names and their corresponding values.
@@ -118,5 +119,5 @@ Configuration files are composed with the following 1-st level keys:
 * Configuration file support.
 * POST payload in requests.
 * Redis support - specify keys instead of URLs. 
-  Redis can also contain the POST payload, instead of using files.
+   Redis can also contain the POST payload, instead of using files.
 * Session support
