@@ -107,17 +107,22 @@ $ pitch -C config.yml
 Configuration files are composed with the following 1st level keys:
 
 1. `headers`
+
     Dictionary of valid HTTP header field names and their corresponding values.
 2. `settings`
+
     Dictionary of the command line parameters (see the [sample file](https://github.com/georgepsarakis/pitch/blob/master/sample.yml#L6)). If the same parameter is passed from the command-line it overrides the settings. 
 3. `urls`
+
     A list of dictionaries where the `url` key is required and optionally the `data` key contains a dictionary with the POST/GET payload. Parameters values should not be URL-encoded.
-    `--url` and `--url-file` parameters are added to those in the configuration file and not overridden.
+  
+    `--url` and `--url-file` parameter contents are added to those in the configuration file and not overridden.
 
 ## Future To-Dos
 
 * Configuration file support.
 * POST payload in requests.
 * Redis support - specify keys instead of URLs. 
-   Redis can also contain the POST payload, instead of using files.
+
+  Redis can also contain the POST payload, instead of using files.
 * Session support
