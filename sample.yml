@@ -1,0 +1,19 @@
+headers:
+  User-Agent: Pitch v1.0
+  Accept-Charset: utf-8
+  Accept-Encoding: gzip, deflate
+  Cache-control: no-cache  
+settings:
+  timeout: 2.5
+  time: 50
+  delay: 500
+urls:
+- url: example-1.com
+  data:
+    a: 1
+    b: a sample string with a & b
+    date: 2011/12/20 12:34:22
+- url: example.com/a-page
+  data:
+    a: 3
+    c: 10&a

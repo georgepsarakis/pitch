@@ -45,6 +45,7 @@ arguments = {
   'auth'     : ( 'A', { 'help': "Basic Authentication username:password (e.g. -A 'george:superpass')", 'default': None}),
   'output'   : ( 'O', { 'help': 'Output format - benchmarking results & element content.', 'choices': ['plain','json'], 'default': 'plain'}),
   'verbose'  : ( 'v', { 'help': 'Verbosity', 'action': 'count', 'default': 0}),
+  'config'   : ( 'C', { 'help': 'Configuration file. See https://github.com/georgepsarakis/pitch#configuration-files', }),
 }
 
 class Pitch(object):
@@ -94,6 +95,10 @@ class Pitch(object):
   INFO  = 2
   def __init__(self, parameters=None, **kwargs):
     self.URLS = []
+    self.STATS = {}
+    self.ELEMENTS = {} 
+    self.DATA = {}
+    self.HEADERS = {}
     if parameters is None:
       parameters = Pitch.parameterizer(**kwargs)
     self.PARAMETERS = parameters
@@ -103,9 +108,7 @@ class Pitch(object):
       R.auth = tuple(self.PARAMETERS.auth.split(':'))
     else:
       R = requests
-    self.pitcher = partial(getattr(R, self.PARAMETERS.method), timeout=self.PARAMETERS.timeout, verify=False)
-    self.STATS = {}
-    self.ELEMENTS = {} 
+    self.pitcher = partial(getattr(R, self.PARAMETERS.method), timeout=self.PARAMETERS.timeout, headers=self.HEADERS, verify=False)
     if self.PARAMETERS.verbose > 0:
       header = [ "****  pitch v1.0 ****" ]
       header.append('Initializing with:')
@@ -158,10 +161,30 @@ class Pitch(object):
             self.URLS.extend(f.readlines())
         else:
           self.log("File %s does not exist, ignored." % filename, self.WARN)
+    if not self.PARAMETERS.config is None:
+      if not os.path.exists(self.PARAMETERS.config):
+        raise Exception('Configuration file "%s" not found.' % self.PARAMETERS.config)
+      try:
+        with open(self.PARAMETERS.config, 'r') as f:
+          configuration = yaml.load("\n".join(f.readlines()))
+      except yaml.parser.ParserError:
+        raise Exception('Not valid YAML file.')
+      if 'headers' in configuration:
+        self.HEADERS.update(configuration['headers'])
+      if 'settings' in configuration:
+        for setting, value in configuration['settings'].iteritems():
+          if not hasattr(self.PARAMETERS, setting):
+            raise Exception('Unknown setting "%s"' % setting)
+        for setting, value in dict(configuration['settings'].items() + vars(self.PARAMETERS).items()).iteritems():
+          setattr(self.PARAMETERS, setting, value)
+      if 'urls' in configuration:
+        for config in configuration['urls']:
+          self.URLS.append(config['url'])
+          self.DATA[config['url']] = config['data']
     if not self.URLS:
       raise Exception('No URL supplied. Use --url or/and --url-file parameters.')
     self.URLS = map(self.url_normalizer, self.URLS)
- 
+         
   def url_normalizer(self, url):
     url = url.strip()
     if re.match(r'^http:', url) is None:      
@@ -225,7 +248,14 @@ class Pitch(object):
   def fetcher(self, url):
     start = time()
     try:
-      request = self.pitcher(url)
+      try:
+        if self.PARAMETERS.method == "get":
+          params['params'] = self.DATA[url]
+        elif self.PARAMETERS.method == "post":
+          params['data'] = self.DATA[url]        
+      except KeyError:      
+        params = {}
+      request = self.pitcher(url, **params)
     except requests.ConnectionError:
       request = None
     request_time = time() - start
