@@ -47,8 +47,10 @@ pitch
                         Output format - benchmarking results & element content.
   -C CONFIG, --config CONFIG
                         Configuration file path. 
-                        Some advanced options cannot be passed through the command line (it would be highly impractical). 
-                        Commonly supported command-line parameters will override those given in the configuration file.                         See https://github.com/georgepsarakis/pitch#configuration-files for details.
+                        Some advanced options cannot be passed through the command line, 
+                        it would be highly impractical. 
+                        Commonly supported command-line parameters will override those given in the configuration file.  
+                        See https://github.com/georgepsarakis/pitch#configuration-files for details.
   -M {GET,POST}, --method {GET,POST}
                         GET/POST method.
 ```
