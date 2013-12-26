@@ -24,11 +24,13 @@ pitch
 ### Parameters
 
 ```
+  -v, --verbose         Verbosity
   -P, --profile         Store & display profiling data for the requests.
   -E [ELEMENTS [ELEMENTS ...]], --elements [ELEMENTS [ELEMENTS ...]]
-                        CSS selectors of elements in requested pages to be returned in STDOUT.
-  -v, --verbose         Verbosity
+                        CSS selectors of elements in requested pages to be returned in output.
   -A AUTH, --auth AUTH  Basic Authentication username:password (e.g. -A 'george:superpass')
+  -R, --raw             Output raw URL contents. Does not pass request content through BeautifulSoup
+                        & disables -E/--elements feature. Default is off.
   -T THREADS, --threads THREADS
                         Number of parallel threads.
   -U [URL [URL ...]], --url [URL [URL ...]]
@@ -42,7 +44,11 @@ pitch
   -B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. 
                         Use combined with -p/--profile.
   -O {plain,json}, --output {plain,json}
-                        Output format for benchmarking results & element content.
+                        Output format - benchmarking results & element content.
+  -C CONFIG, --config CONFIG
+                        Configuration file path. 
+                        Some advanced options cannot be passed through the command line (it would be highly impractical). 
+                        Commonly supported command-line parameters will override those given in the configuration file.                         See https://github.com/georgepsarakis/pitch#configuration-files for details.
   -M {GET,POST}, --method {GET,POST}
                         GET/POST method.
 ```
