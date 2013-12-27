@@ -106,7 +106,7 @@ class Pitch(object):
   ERROR = 0
   WARN  = 1 
   INFO  = 2
-  def __init__(self, cli=True, **kwargs):
+  def __init__(self, **kwargs):
     self.URLS = []
     self.STATS = {}
     self.ELEMENTS = {} 
@@ -116,14 +116,10 @@ class Pitch(object):
     self.OUTPUT = {}
     self.DIFFER = {}   
     self.REDIS = None
-    self.CLI = cli
+    self.CLI = not re.match(r'^pitch', os.path.basename(sys.argv[0])) is None
     self.differ = SequenceMatcher(None, "", "", False)
     self.WS = partial(re.compile(r'\s+').sub, ' ')
-    if not cli:
-      parameters = Pitch.parameterizer(self.CLI, **kwargs)
-    else:
-      parameters = Pitch.parameterizer(self.CLI)
-    self.PARAMETERS = parameters
+    self.PARAMETERS = Pitch.parameterizer(self.CLI, **kwargs)
     self.configure()
     if not self.PARAMETERS.auth is None:
       R = requests.Session()
@@ -144,9 +140,9 @@ class Pitch(object):
   @staticmethod
   def parameterizer(cli=True, **kwargs):   
     if cli:
-      argv = sys.argv[:]
+      argv = sys.argv[1:]
       ''' display help when empty '''
-      if len(argv) == 1:
+      if len(argv) == 0:
         argv.append('-h')
     else:      
       argv = []
@@ -191,6 +187,10 @@ class Pitch(object):
     if not self.URLS:
       raise PitchInvalidSetting('No URL supplied. Use --url or/and --url-file parameters.')
     self.URLS = map(self.url_normalizer, self.URLS)
+    if self.PARAMETERS.config is None:
+      for url in self.URLS:
+        if not url in self.OUTPUT:
+          self.OUTPUT[url] = ("stdout", True)
   
   def analyze_config_file(self, config_file):
     if not os.path.exists(config_file):
@@ -390,7 +390,9 @@ class Pitch(object):
     self.delayer()
     return url, request, request_time
   
-  def fetch_element(self, url, html, _):
+  def fetch_element(self, request):  
+    url, r, _ = request
+    html = r.content
     elements = {}
     if self.PARAMETERS.raw:
       return url, {"html" : html}
