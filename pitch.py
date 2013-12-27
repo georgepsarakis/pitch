@@ -168,6 +168,8 @@ class Pitch(object):
       self.PARAMETERS.delay /= 1000.
     if self.PARAMETERS.threads < 1:
       self.PARAMETERS.threads = 1
+    if tabulate is None:
+      self.PARAMETERS.output = "json"
     if not self.PARAMETERS.profile and self.PARAMETERS.elements is None:
       self.PARAMETERS.elements = ['html']
     ''' BeautifulSoup not installed '''
@@ -333,7 +335,8 @@ class Pitch(object):
       self.looper()
     except KeyboardInterrupt:
       pass
-    self.results()    
+    if self.PARAMETERS.profile:
+      self.profiler()    
    
   def formatter(self, metric, item):
     if isinstance(item, int):
@@ -343,16 +346,13 @@ class Pitch(object):
    
   def result_table(self, stats, metrics):
     display = [ [ self.METRICS[metric]['label'], self.formatter(metric, stats[metric]) ] for metric in metrics ]
-    if self.PARAMETERS.output == "plain":
-      return tabulate(display, tablefmt="grid")
-    elif self.PARAMETERS.output == "json":
-      return dict(display)
+    return Pitch.ternary(self.PARAMETERS.output == "json", dict(display), display)
 
-  def results(self):
+  def profiler(self):
     if self.PARAMETERS.output == "json":
-      printer = partial(json.dumps, indent=2, separators=(',', ':'))
+      dumper = partial(json.dumps, indent=2, separators=(',', ':'))
     else: 
-      printer = "\n".join
+      dumper = self.identity
     if self.PARAMETERS.profile:
       labels = self.METRICS.keys()
       output = []
@@ -366,17 +366,12 @@ class Pitch(object):
         size_metrics = [ 'size', 'avg-size' ]
         table = self.result_table(stats, state_metrics + time_metrics + size_metrics)
         if self.PARAMETERS.output == "plain":
-          output.append('|--- ' + url.encode('utf-8') + ' ---|')
-          output.append(table)
+          output.append([['URL', url.encode('utf-8')]] + table)
         elif self.PARAMETERS.output == "json":
-          output.append({ url : table })
+          output.append({ url: table })
+      if self.PARAMETERS.output == "plain":
+        output = tabulate(output, tablefmt="grid")
       print printer(output)
-    if not self.PARAMETERS.elements is None:
-      if self.PARAMETERS.output == "json":
-        elements = self.ELEMENTS
-      elif self.PARAMETERS.output == "plain":
-        elements = [ "\n".join(self.ELEMENTS[url][selector]) for url, selectors in self.ELEMENTS.iteritems() for selector in selectors ]       
-      print printer(elements)
                
   def fetcher(self, url):
     start = time()
@@ -430,10 +425,7 @@ class Pitch(object):
       try:
         self.STATS[url]
       except KeyError:
-        self.STATS[url] = {
-          'min' : 10**6,
-          'max' : 0,
-        }
+        self.STATS[url] = {'min': 10**3, 'max': 0,}
       stats = self.STATS[url]
       stats['min'] = min(stats['min'], request_time)
       stats['max'] = max(stats['max'], request_time)
@@ -443,10 +435,8 @@ class Pitch(object):
         pass
       self.incr(stats, 'time', request_time)
       self.incr(stats, 'total')                            
-      if not request is None and request.status_code < 400:
-        self.incr(stats, 'ok')
-      else:
-        self.incr(stats, 'error')              
+      status = Pitch.ternary(not request is None and request.status_code < 400, 'ok', 'error')
+      self.incr(stats, status)
   
   @staticmethod
   def ternary(test, if_true, if_false=None):
