@@ -3,16 +3,23 @@ try:
   from gevent import monkey
   monkey.patch_socket()
   import gevent
+  from gevent.pool import Pool
 except ImportError:
   gevent = None
+  Pool = None
 import os
 import sys
 import re
 import requests
+from difflib import SequenceMatcher
 from time import time, sleep
 from functools import partial
 from itertools import imap
 import argparse
+try:
+  import redis
+except ImportError:
+  redis = None
 try:
   import yaml
 except ImportError:
@@ -45,13 +52,19 @@ arguments = {
   'auth'     : ( 'A', { 'help': "Basic Authentication username:password (e.g. -A 'george:superpass')", 'default': None}),
   'output'   : ( 'O', { 'help': 'Output format - benchmarking results & element content.', 'choices': ['plain','json'], 'default': 'plain'}),
   'verbose'  : ( 'v', { 'help': 'Verbosity', 'action': 'count', 'default': 0}),
-  'config'   : ( 'C', { 'help': 'Configuration file. See https://github.com/georgepsarakis/pitch#configuration-files', }),
+  'raw'      : ( 'R', { 'help': 'Output raw URL contents. Does not pass contents through BeautifulSoup & disables -E/--elements feature. Default is off.', 'action': 'store_true', 'default': False}),
+  'config'   : ( 'C', { 'help': 'Configuration file. Some advanced options cannot be passed through the command line, it would be highly impractical. Commonly supported command-line parameters will override those given in the configuration file. See https://github.com/georgepsarakis/pitch#configuration-files for details.', }),
 }
+
+''' Custom Exceptions '''
+class PitchInvalidSetting(Exception): pass
+class PitchConfigurationRequired(Exception): pass
 
 class Pitch(object):
   TERMINATE             = False
   PROGRESS_INTERVAL     = 1.
   PROGRESS_LAST_PRINTED = None
+  CLI                   = True
   METRICS = {
     'ok'       : { 
       'label' : 'Successful',
@@ -93,16 +106,25 @@ class Pitch(object):
   ERROR = 0
   WARN  = 1 
   INFO  = 2
-  def __init__(self, parameters=None, **kwargs):
+  def __init__(self, cli=True, **kwargs):
     self.URLS = []
     self.STATS = {}
     self.ELEMENTS = {} 
     self.DATA = {}
     self.HEADERS = {}
-    if parameters is None:
-      parameters = Pitch.parameterizer(**kwargs)
+    self.SOURCES = {}
+    self.OUTPUT = {}
+    self.DIFFER = {}   
+    self.REDIS = None
+    self.CLI = cli
+    self.differ = SequenceMatcher(None, "", "", False)
+    self.WS = partial(re.compile(r'\s+').sub, ' ')
+    if not cli:
+      parameters = Pitch.parameterizer(self.CLI, **kwargs)
+    else:
+      parameters = Pitch.parameterizer(self.CLI)
     self.PARAMETERS = parameters
-    self.__process_parameters()
+    self.configure()
     if not self.PARAMETERS.auth is None:
       R = requests.Session()
       R.auth = tuple(self.PARAMETERS.auth.split(':'))
@@ -118,31 +140,27 @@ class Pitch(object):
       header.append('- Duration : %d' % self.PARAMETERS.time)
       header.append('- Elements : %s' % self.PARAMETERS.elements)
       print "\n".join([ h.ljust(max(map(len, header))) for h in header ])
-  
+    
   @staticmethod
-  def parameterizer(**kwargs):   
-    if kwargs:
-      ''' temporary copy of sys.argv '''
-      sys_argv = sys.argv[:]
-      sys.argv = []
-      for k, v in kwargs:
+  def parameterizer(cli=True, **kwargs):   
+    if cli:
+      argv = sys.argv[:]
+      ''' display help when empty '''
+      if len(argv) == 1:
+        argv.append('-h')
+    else:      
+      argv = []
+      for k, v in kwargs.iteritems():
         if isinstance(v, list):
           v = ' '.join(v)
-        sys.argv.append('--%s=%s' % (k, v))
-    else:
-      ''' display help when empty '''
-      if len(sys.argv) <= 1:
-        sys.argv.append('-h')
+        argv.append('--%s=%s' % (k, v))
     optparser = argparse.ArgumentParser('pitch - URL Fetching & Benchmarking Tool')
     for switch, parameters in arguments.iteritems():
       optparser.add_argument('-%s' % parameters[0], '--%s' % switch, **parameters[1])
-    parameters = optparser.parse_args()
-    if kwargs:
-      ''' restore original command line parameters '''
-      sys.argv = sys_argv[:]
+    parameters = optparser.parse_args(argv)
     return parameters
 
-  def __process_parameters(self):
+  def configure(self):
     self.PARAMETERS.method = self.PARAMETERS.method.lower()
     if not self.PARAMETERS.method in ['get','post']:
       self.PARAMETERS.method = 'get'
@@ -152,6 +170,11 @@ class Pitch(object):
       self.PARAMETERS.threads = 1
     if not self.PARAMETERS.profile and self.PARAMETERS.elements is None:
       self.PARAMETERS.elements = ['html']
+    ''' BeautifulSoup not installed '''
+    if bs is None:
+      ''' A warning should be printed '''
+      self.PARAMETERS.elements = None
+      self.PARAMETERS.raw = True
     if not self.PARAMETERS.url is None:
       self.URLS.extend(self.PARAMETERS.url)
     if not self.PARAMETERS.url_file is None:
@@ -162,29 +185,139 @@ class Pitch(object):
         else:
           self.log("File %s does not exist, ignored." % filename, self.WARN)
     if not self.PARAMETERS.config is None:
-      if not os.path.exists(self.PARAMETERS.config):
-        raise Exception('Configuration file "%s" not found.' % self.PARAMETERS.config)
-      try:
-        with open(self.PARAMETERS.config, 'r') as f:
-          configuration = yaml.load("\n".join(f.readlines()))
-      except yaml.parser.ParserError:
-        raise Exception('Not valid YAML file.')
-      if 'headers' in configuration:
-        self.HEADERS.update(configuration['headers'])
-      if 'settings' in configuration:
-        for setting, value in configuration['settings'].iteritems():
-          if not hasattr(self.PARAMETERS, setting):
-            raise Exception('Unknown setting "%s"' % setting)
-        for setting, value in dict(configuration['settings'].items() + vars(self.PARAMETERS).items()).iteritems():
-          setattr(self.PARAMETERS, setting, value)
-      if 'urls' in configuration:
-        for config in configuration['urls']:
-          self.URLS.append(config['url'])
-          self.DATA[config['url']] = config['data']
+      self.analyze_config_file(self.PARAMETERS.config)
     if not self.URLS:
-      raise Exception('No URL supplied. Use --url or/and --url-file parameters.')
+      raise PitchInvalidSetting('No URL supplied. Use --url or/and --url-file parameters.')
     self.URLS = map(self.url_normalizer, self.URLS)
-         
+  
+  def analyze_config_file(self, config_file):
+    if not os.path.exists(config_file):
+      raise PitchInvalidSetting('Configuration file "%s" not found.' % config_file)
+    try:
+      with open(config_file, 'r') as f:
+        configuration = yaml.load("\n".join(f.readlines()))
+    except yaml.parser.ParserError:
+      raise PitchInvalidSetting('Not valid YAML file "%s".' % config_file)
+    redis_settings = {}
+    if 'redis' in configuration:
+      redis_settings.update(configuration['redis'])
+    try:
+      self.REDIS = redis.StrictRedis(**redis_settings)
+      self.REDIS.ping()
+    except redis.exceptions.ConnectionError:
+      self.REDIS = None 
+    if 'headers' in configuration:
+      self.HEADERS.update(configuration['headers'])
+    if 'settings' in configuration:
+      for setting, value in configuration['settings'].iteritems():
+        if not hasattr(self.PARAMETERS, setting):
+          raise PitchInvalidSetting('Unknown setting "%s"' % setting)
+      for setting, value in dict(configuration['settings'].items() + vars(self.PARAMETERS).items()).iteritems():
+        setattr(self.PARAMETERS, setting, value)
+    if 'urls' in configuration:
+      for config in configuration['urls']:
+        self.URLS.append(config['url'])
+        if 'test' in config:
+          test = config['test']
+          self.DIFFER[config['url']] = { 
+            'threshold': Pitch.getdefault(test, 'diff', 99.9)/100.,
+            'hash'     : Pitch.getdefault(test, 'hash'),
+            'url'      : Pitch.getdefault(test, 'url'),
+            'file'     : Pitch.getdefault(test, 'file'),
+            'redis'    : Pitch.getdefault(test, 'redis'),
+            'ignore'   : Pitch.ternary(not bs is None, Pitch.getdefault(test, 'ignore')),
+            }
+        data = {}
+        if 'data' in config:
+          data = config['data']
+        if 'redis-data' in config:
+          data = self.data_get('url', 'redis', key=config['redis-data'])
+        if 'file-data' in config:
+          data = self.data_get('url', 'file', path=config['file-data'])
+        self.DATA[config['url']] = data
+        if 'output' in config:
+          self.OUTPUT[config['url']] = ("stdout", config['output'])
+        if 'redis-output' in config:
+          self.OUTPUT[config['url']] = ("redis" , config['redis-output'])
+        if 'file-output' in config:
+          self.OUTPUT[config['url']] = ("file"  , config['file-output'])
+  
+  def identity(self, item):
+    return item
+
+  def data_get(self, action, source='redis', **kwargs):
+    data = None
+    if source == 'redis':
+      key = kwargs['key']
+      if self.REDIS is None:
+        raise PitchConfigurationRequired
+      try:
+        data = self.REDIS.get(key)
+      except:
+        data = None
+      if data is None:
+        raise PitchInvalidSetting('Redis key missing or error: "%s"' % key)
+    elif source == 'file':
+      path = kwargs['path']
+      if not os.path.exists(path):
+        raise PitchConfigurationRequired('File not found "%s"' % path)
+      try:
+        with open(path, 'r') as f:
+          data = "".join(f.readlines())
+      except:
+        raise PitchInvalidSetting('Unable to read file "%s"' % path)
+    if action == 'url':
+      try:
+        data = json.loads(data)
+      except ValueError:
+        message = 'JSON data could not be decoded for ' 
+        if source == "redis":
+          message += 'Redis key "%s"' % key
+        elif source == "file":
+          message += 'file "%s"' % path          
+        raise PitchInvalidSetting(message) 
+    return data
+
+  def similarity(self, a, b, threshold=1.):
+    self.differ.set_seqs(self.WS(a), self.WS(b))
+    rqr = self.differ.real_quick_ratio()
+    if rqr >= threshold:
+      return True, rqr
+    else:
+      qr = self.differ.quick_ratio()
+      if qr >= threshold:
+        return True, qr
+      r = self.differ.ratio()
+      return r >= threshold, r
+
+  def save_content(self, url):
+    if url in self.OUTPUT and url in self.ELEMENTS:
+      media, target = self.OUTPUT[url]
+      self.output(self.ELEMENTS[url], target, media)
+
+  def output(self, content, target, media='redis'):    
+    try:
+      content = json.dumps(content)
+    except ValueError:
+      pass
+    if media == "redis":
+      if self.REDIS is None:
+        raise PitchConfigurationRequired
+      return self.REDIS.set(target, content)
+    elif media == "stdout":
+      sys.stdout.write(content)
+      sys.stdout.flush()
+    elif media == "file":
+      if not os.path.exists(os.path.dirname(target)):
+        try:
+          os.makedirs(os.path.dirname(target))
+        except OSError:
+          ''' print a warning ? '''
+      with open(target, 'w') as f:
+        f.write(content)
+      return True
+    return None
+             
   def url_normalizer(self, url):
     url = url.strip()
     if re.match(r'^http:', url) is None:      
@@ -262,14 +395,15 @@ class Pitch(object):
     self.delayer()
     return url, request, request_time
   
-  def fetch_element(self, html):
+  def fetch_element(self, url, html, _):
+    elements = {}
+    if self.PARAMETERS.raw:
+      return url, {"html" : html}
     if not self.PARAMETERS.elements is None:
       tree = bs(html, "lxml")
-      elements = {}
       for selector in self.PARAMETERS.elements:        
         elements[selector] = map(unicode, tree.select(selector))
-      return elements
-    return {}
+    return url, elements
    
   def incr(self, obj, key, value=1):
     try:
@@ -278,69 +412,92 @@ class Pitch(object):
       obj[key] = value
     return obj[key]
   
-  def progress(self, counter, start):
+  def progress(self, counter):
     if self.PROGRESS_LAST_PRINTED is None:
       self.PROGRESS_LAST_PRINTED = time()
     if self.PARAMETERS.verbose >= 1 and self.PARAMETERS.time > 0:
       if time() - self.PROGRESS_LAST_PRINTED >= self.PROGRESS_INTERVAL:
         self.PROGRESS_LAST_PRINTED = time()
-        message = ">> %d REQUESTS (%d%%)" % (counter * self.PARAMETERS.threads, int(100*(time()-start)/self.PARAMETERS.time))
+        message = ">> %d REQUESTS (%d%%)" % (counter * self.PARAMETERS.threads, int(100*(time()-self.LOOP_START)/self.PARAMETERS.time))
         sys.stdout.write(message)
         sys.stdout.flush()
         sys.stdout.write('\b' * len(message))
     counter += 1
     return counter
+  
+  def stats(self, results):
+    for url, request, request_time in results:
+      try:
+        self.STATS[url]
+      except KeyError:
+        self.STATS[url] = {
+          'min' : 10**6,
+          'max' : 0,
+        }
+      stats = self.STATS[url]
+      stats['min'] = min(stats['min'], request_time)
+      stats['max'] = max(stats['max'], request_time)
+      try:
+        self.incr(stats, 'size', int(request.headers['content-length']))
+      except KeyError:
+        pass
+      self.incr(stats, 'time', request_time)
+      self.incr(stats, 'total')                            
+      if not request is None and request.status_code < 400:
+        self.incr(stats, 'ok')
+      else:
+        self.incr(stats, 'error')              
+  
+  @staticmethod
+  def ternary(test, if_true, if_false=None):
+    if test:
+      return if_true
+    else:
+      return if_false
+   
+  @staticmethod
+  def getdefault(obj, key, default=None):
+    try:
+      return obj[key]
+    except KeyError:    
+      return default
+    except IndexError:
+      return default
+
+  def retriever(self, urls, timeout, multithreaded):
+    results = []
+    if multithreaded:
+      timeout = duration - time() + self.LOOP_START
+      if timeout < self.PARAMETERS.timeout:
+        timeout = self.PARAMETERS.timeout
+      with gevent.Timeout(timeout, False):
+        results = self.THREAD_POOL.imap(self.fetcher, urls)
+    else:
+      results = filter(None, map(self.fetcher, self.URLS))
+    return results
    
   def looper(self):
     counter = 0
-    start = time()
+    self.LOOP_START = time()
     profile = self.PARAMETERS.profile
-    if not profile:
-      duration = 0
-    else:
-      duration = self.PARAMETERS.time
-    while not self.TERMINATE and ( time() - start < duration or duration == 0):
-      counter = self.progress(counter, start)
-      results = []
-      if self.PARAMETERS.threads > 1:
-        if profile:
-          urls = (random.choice(self.URLS) for n in xrange(self.PARAMETERS.threads))
-        else:
-          urls = self.URLS
-        threads = [ gevent.spawn(self.fetcher, url) for url in urls ]
-        timeout = duration - time() + start
-        if timeout < self.PARAMETERS.timeout:
-          timeout = self.PARAMETERS.timeout
-        gevent.joinall(threads, timeout=timeout)
-        results = (_.value for _ in threads if not _ is None and  _.successful)
-      else:
-        results = filter(None, map(self.fetcher, self.URLS))
-      if not self.PARAMETERS.elements is None:
-        self.ELEMENTS.update(dict(zip([ r[0] for r in results ], map(self.fetch_element, [ r[1].content for r in results ]))))
+    multithreaded = self.PARAMETERS.threads > 1 and not Pool is None
+    if multithreaded:
+      self.THREAD_POOL = Pool(self.PARAMETERS.threads)
+    duration = Pitch.ternary(profile, self.PARAMETERS.time, 0)
+    urls = self.URLS
+    while not self.TERMINATE:
+      counter = self.progress(counter)
       if profile:
-        for url, request, request_time in results:
-          try:
-            self.STATS[url]
-          except KeyError:
-            self.STATS[url] = {
-              'min' : 10**6,
-              'max' : 0,
-            }
-          stats = self.STATS[url]
-          stats['min'] = min(stats['min'], request_time)
-          stats['max'] = max(stats['max'], request_time)
-          try:
-            self.incr(stats, 'size', int(request.headers['content-length']))
-          except KeyError:
-            pass
-          self.incr(stats, 'time', request_time)
-          self.incr(stats, 'total')                            
-          if not request is None and request.status_code < 400:
-            self.incr(stats, 'ok')
-          else:
-            self.incr(stats, 'error')              
-      if duration == 0: 
+        urls = (random.choice(self.URLS) for n in xrange(len(self.URLS)))
+      timeout = duration - time() + self.LOOP_START
+      results = self.retriever(urls, Pitch.ternary(timeout > self.PARAMETERS.timeout, self.PARAMETERS.timeout, timeout), multithreaded)
+      if not self.PARAMETERS.elements is None:
+        self.ELEMENTS.update(dict(map(self.fetch_element, results)))
+      if profile:
+        self.stats(results)
+      if not profile or time() - start >= duration: 
         break
+    map(self.save_content, self.ELEMENTS.keys())
     sys.stdout.flush()
   
   def terminate(self, signum, frame):
@@ -356,7 +513,7 @@ class Pitch(object):
 
 ''' wrapper function for entry point '''
 def main():
-  P = Pitch(Pitch.parameterizer())
+  P = Pitch()
   signal.signal(signal.SIGTERM, P.terminate)
   P.run()  
 
