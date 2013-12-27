@@ -1,10 +1,20 @@
 pitch
 =====
 
+## What is this?
+
+`pitch` is a tool that combines retrieving & comparing HTML content from pages and benchmarking.
+
 ## Features
 * used both as a command-line tool or a library
+* JSON output
+* easily configurable with YAML
+* receives POST/GET parameters from a JSON object stored either in a Redis key or a file or simply given in the configuration file in YAML format
+* outputs retrieved HTML to a file or store in a Redis key
+* compares retrieved HTML to stored content and provides a similarity ratio
 * accepts multiple URLs and/or a/multiple file(s) containing URLs
-* performs HTTP benchmarks by leveraging gevent for making parallel requests and get metrics such as average request time & size, failed & successful request count
+* multithreading support with gevent for parallelizing requests thus introducing concurrency for benchmarks and faster HTML retrieval
+* HTTP benchmarks with metrics such as average request time & size, failed/successful request count
 
 ## Dependencies
 
