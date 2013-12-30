@@ -36,7 +36,7 @@ title: pitch - URL fetching, comparison & benchmarking
 
 ### Parameters
 
-```  
+```bash
   -v, --verbose         Verbosity
   -P, --profile         Store & display profiling data for the requests.
   -E [ELEMENTS [ELEMENTS ...]], --elements [ELEMENTS [ELEMENTS ...]]
@@ -72,18 +72,22 @@ title: pitch - URL fetching, comparison & benchmarking
 
 #### Fetch a single page
 
-`$ pitch -U example.com`
+```bash
+$ pitch -U example.com
+```
 
 > HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. 
 > Perhaps a `--raw` option should be added to display actual content in the future.
 
 #### Fetch elements from multiple pages
 
-`$ pitch -U example1.com example2.com/home example3.com --elements h1 h2 --output=json`
+```bash
+$ pitch -U example1.com example2.com/home example3.com --elements h1 h2 --output=json
+```
 
 The command will output a JSON object:
 
-```
+```json
 {
   "http://example1.com" : {
     "h1" : ["Header for example1.com"],
@@ -104,7 +108,9 @@ The command will output a JSON object:
 
 #### Benchmark
 
-`$ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --profile`
+```bash
+$ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --profile
+```
 
 On each run 20 requests will be made, divided randomly to the 2 given URLs.
 Thus, concurrency is approximately 10.
@@ -115,7 +121,9 @@ A single URL would result in 20 concurrent requests.
 
 #### Configuration files
 
-`$ pitch -C config.yml`
+```bash
+$ pitch -C config.yml
+```
 
 Configuration files are composed with the following 1st level keys:
 
