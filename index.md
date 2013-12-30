@@ -136,7 +136,7 @@ Configuration files are composed with the following 1st level keys:
     Dictionary of valid HTTP header field names and their corresponding values.
 2. `settings`
 
-    Dictionary of the command line parameters (see the [sample file](https://github.com/georgepsarakis/pitch/blob/master/sample.yml#L6)). If the same parameter is passed from the command-line it overrides the settings. 
+    Dictionary of the command line parameters. If the same parameter is passed from the command-line it overrides the configuration file settings. 
 3. `urls`
 
     A list of dictionaries where the `url` key is required and optionally the `data` key contains a dictionary with the POST/GET payload. Parameters values should not be URL-encoded.
