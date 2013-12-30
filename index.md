@@ -1,7 +1,6 @@
 ---
 title: pitch
 ---
-<!DOCTYPE html>
 <html>
   <head>
     <link href="css/styles.css" media="screen" rel="stylesheet" />
