@@ -19,6 +19,8 @@ title: pitch - URL fetching, comparison & benchmarking
 * multithreading support with gevent for parallelizing requests thus introducing concurrency for benchmarks and faster HTML retrieval
 * HTTP benchmarks with metrics such as average request time & size, failed/successful request count
 
+You can see some configuration file samples for [benchmarking](https://github.com/georgepsarakis/pitch/blob/master/sample.benchmark.yml), [fetching](https://github.com/georgepsarakis/pitch/blob/master/sample.fetch.yml) & [content comparison](https://github.com/georgepsarakis/pitch/blob/master/sample.diff.yml).
+
 ## Dependencies
 
 ### Required
@@ -77,7 +79,6 @@ $ pitch -U example.com
 ```
 
 > HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. 
-> Perhaps a `--raw` option should be added to display actual content in the future.
 
 #### Fetch elements from multiple pages
 
@@ -104,7 +105,8 @@ The command will output a JSON object:
 ```
 
 > Using `--threads` will parallelize the requests so that you may get faster results.
-> You can add `--delay=500` for a 500msec delay between successive requests in case you want to avoid overloading a host or being rate limited.
+
+> You can also add `--delay=500` for a 500msec delay between successive requests in case you want to avoid overloading a host or being rate limited.
 
 #### Benchmark
 
@@ -115,6 +117,8 @@ $ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --p
 On each run 20 requests will be made, divided randomly to the 2 given URLs.
 Thus, concurrency is approximately 10.
 
+
+Parallel requests are performed with [gevent.pool](http://www.gevent.org/gevent.pool.html).
 A single URL would result in 20 concurrent requests.
 
 > Benchmark time is approximate and could be off by `timeout` seconds.
@@ -143,4 +147,4 @@ Configuration files are composed with the following 1st level keys:
 
 * Session support
 * More profiler metrics
-* Content diff/comparison feature
+* Content diff/comparison feature enhancement
