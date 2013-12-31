@@ -3,11 +3,9 @@ layout: default
 title: pitch - URL fetching, comparison & benchmarking
 ---
 
-# pitch
-
 ## What is this?
 
-`pitch` is a tool that combines retrieving & comparing HTML content from pages and benchmarking.
+`pitch` is a Python command-line tool & library that combines retrieving & comparing HTML content from pages and benchmarking.
 
 ## Features
 * used both as a command-line tool or a library
