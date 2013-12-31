@@ -39,7 +39,7 @@ You can see some configuration file samples for [benchmarking](https://github.co
 
 ### Parameters
 
-```bash
+<pre>
   -v, --verbose         Verbosity
   -P, --profile         Store & display profiling data for the requests.
   -E [ELEMENTS [ELEMENTS ...]], --elements [ELEMENTS [ELEMENTS ...]]
@@ -69,27 +69,23 @@ You can see some configuration file samples for [benchmarking](https://github.co
                         See https://github.com/georgepsarakis/pitch#configuration-files for details.
   -M {GET,POST}, --method {GET,POST}
                         GET/POST method.
-```
+</pre>
 
 ### Examples
 
 #### Fetch a single page
 
-```bash
-$ pitch -U example.com
-```
+<pre>$ pitch -U example.com</pre>
 
 > HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. 
 
 #### Fetch elements from multiple pages
 
-```bash
-$ pitch -U example1.com example2.com/home example3.com --elements h1 h2 --output=json
-```
+<pre>$ pitch -U example1.com example2.com/home example3.com --elements h1 h2 --output=json</pre>
 
 The command will output a JSON object:
 
-```json
+<pre>
 {
   "http://example1.com" : {
     "h1" : ["Header for example1.com"],
@@ -103,7 +99,7 @@ The command will output a JSON object:
     "h1" : [ "Header #1"]
   }
 }
-```
+</pre>
 
 > Using `--threads` will parallelize the requests so that you may get faster results.
 
@@ -111,9 +107,7 @@ The command will output a JSON object:
 
 #### Benchmark
 
-```bash
-$ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --profile
-```
+<pre>$ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --profile</pre>
 
 On each run 20 requests will be made, divided randomly to the 2 given URLs.
 
@@ -126,9 +120,7 @@ Parallel requests are performed with [gevent.pool](http://www.gevent.org/gevent.
 
 #### Configuration files
 
-```bash
-$ pitch -C config.yml
-```
+<pre>$ pitch -C config.yml</pre>
 
 Configuration files are composed with the following 1st level keys:
 
