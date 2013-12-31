@@ -116,11 +116,11 @@ $ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --p
 ```
 
 On each run 20 requests will be made, divided randomly to the 2 given URLs.
-Thus, concurrency is approximately 10.
 
+Thus, concurrency is approximately 10. A single URL would result in 20 concurrent requests.
 
 Parallel requests are performed with [gevent.pool](http://www.gevent.org/gevent.pool.html).
-A single URL would result in 20 concurrent requests.
+
 
 > Benchmark time is approximate and could be off by `timeout` seconds.
 
