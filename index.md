@@ -39,53 +39,57 @@ You can see some configuration file samples for [benchmarking](https://github.co
 
 ### Parameters
 
-<pre>
-  -v, --verbose         Verbosity
-  -P, --profile         Store & display profiling data for the requests.
-  -E [ELEMENTS [ELEMENTS ...]], --elements [ELEMENTS [ELEMENTS ...]]
-                        CSS selectors of elements in requested pages to be returned in output.
-  -A AUTH, --auth AUTH  Basic Authentication username:password (e.g. -A 'george:superpass')
-  -R, --raw             Output raw URL contents. Does not pass request content through BeautifulSoup
-                        & disables -E/--elements feature. Default is off.
-  -T THREADS, --threads THREADS
-                        Number of parallel threads.
-  -U [URL [URL ...]], --url [URL [URL ...]]
-                        URL to process. You can enter multiple values.
-  -F [URL_FILE [URL_FILE ...]], --url-file [URL_FILE [URL_FILE ...]]
-                        Files with URLs to process. You can enter multiple values.
-  -D DELAY, --delay DELAY
-                        Delay between requests in msec.
-  -X TIMEOUT, --timeout TIMEOUT
-                        Request timeout in seconds.
-  -B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. 
-                        Use combined with -p/--profile.
-  -O {plain,json}, --output {plain,json}
-                        Output format - benchmarking results & element content.
-  -C CONFIG, --config CONFIG
-                        Configuration file path. 
-                        Some advanced options cannot be passed through the command line, 
-                        it would be highly impractical. 
-                        Commonly supported command-line parameters will override those given in the configuration file.  
-                        See https://github.com/georgepsarakis/pitch#configuration-files for details.
-  -M {GET,POST}, --method {GET,POST}
-                        GET/POST method.
-</pre>
+```
+-v, --verbose         Verbosity
+-P, --profile         Store & display profiling data for the requests.
+-E [ELEMENTS [ELEMENTS ...]], --elements [ELEMENTS [ELEMENTS ...]]
+                      CSS selectors of elements in requested pages to be returned in output.
+-A AUTH, --auth AUTH  Basic Authentication username:password (e.g. -A 'george:superpass')
+-R, --raw             Output raw URL contents. Does not pass request content through BeautifulSoup
+                      & disables -E/--elements feature. Default is off.
+-T THREADS, --threads THREADS
+                      Number of parallel threads.
+-U [URL [URL ...]], --url [URL [URL ...]]
+                      URL to process. You can enter multiple values.
+-F [URL_FILE [URL_FILE ...]], --url-file [URL_FILE [URL_FILE ...]]
+                      Files with URLs to process. You can enter multiple values.
+-D DELAY, --delay DELAY
+                      Delay between requests in msec.
+-X TIMEOUT, --timeout TIMEOUT
+                      Request timeout in seconds.
+-B TIME, --time TIME  Duration of benchmark (in sec). Default is 60. 
+                      Use combined with -p/--profile.
+-O {plain,json}, --output {plain,json}
+                      Output format - benchmarking results & element content.
+-C CONFIG, --config CONFIG
+                      Configuration file path. 
+                      Some advanced options cannot be passed through the command line, 
+                      it would be highly impractical. 
+                      Commonly supported command-line parameters will override those given in the configuration file.  
+                      See https://github.com/georgepsarakis/pitch#configuration-files for details.
+-M {GET,POST}, --method {GET,POST}
+                      GET/POST method.
+```
 
 ### Examples
 
 #### Fetch a single page
 
-<pre>$ pitch -U example.com</pre>
+```
+$ pitch -U example.com
+```
 
 > HTML will be processed by BeautifulSoup thus correcting/modifying the tree and output may differ from actual source. 
 
 #### Fetch elements from multiple pages
 
-<pre>$ pitch -U example1.com example2.com/home example3.com --elements h1 h2 --output=json</pre>
+```
+$ pitch -U example1.com example2.com/home example3.com --elements h1 h2 --output=json
+```
 
 The command will output a JSON object:
 
-<pre>
+```
 {
   "http://example1.com" : {
     "h1" : ["Header for example1.com"],
@@ -99,7 +103,7 @@ The command will output a JSON object:
     "h1" : [ "Header #1"]
   }
 }
-</pre>
+```
 
 > Using `--threads` will parallelize the requests so that you may get faster results.
 
@@ -107,7 +111,9 @@ The command will output a JSON object:
 
 #### Benchmark
 
-<pre>$ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --profile</pre>
+```
+$ pitch -U example.com dev.example.com --timeout=3.5 --time=30. --threads=20 --profile
+```
 
 On each run 20 requests will be made, divided randomly to the 2 given URLs.
 
@@ -115,12 +121,13 @@ Thus, concurrency is approximately 10. A single URL would result in 20 concurren
 
 Parallel requests are performed with [gevent.pool](http://www.gevent.org/gevent.pool.html).
 
-
 > Benchmark time is approximate and could be off by `timeout` seconds.
 
 #### Configuration files
 
-<pre>$ pitch -C config.yml</pre>
+```
+$ pitch -C config.yml
+```
 
 Configuration files are composed with the following 1st level keys:
 
