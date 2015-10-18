@@ -16,6 +16,7 @@ sdist
 develop-eggs
 .installed.cfg
 lib
+!pitch/lib
 lib64
 __pycache__
 
@@ -34,3 +35,13 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+tmp/*
+*.log
+*.json
+*.yaml
+.idea*
+
+# virtualenv
+env3.4/*
+env2.7/*
