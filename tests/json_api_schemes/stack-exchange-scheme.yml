@@ -1,0 +1,38 @@
+base_url: https://api.stackexchange.com/2.2
+threads: 1
+repeat: 1
+processes: 1
+failfast: yes
+requests:
+    headers:
+        User-Agent: pitch-json-api-client-test
+variables: {}
+steps:
+    -
+        url: /info?site=stackoverflow
+        method: get
+        plugins:
+            - plugin: json_file_output
+              filename: "tmp/responses/json_output/stack-overflow-info.json"
+              create_dirs: true
+            - plugin: response_logger
+              message: "Total comments: {{ response.as_json['items'].0.total_comments }}"
+              handler:
+                filename: tmp/se-testing.log
+            - plugin: request_delay
+              seconds: 1
+    -
+        url: /questions?order=desc&sort=activity&site=stackoverflow&pagesize=3
+        plugins:
+            - plugin: request_delay
+              seconds: 1
+            - plugin: post_register
+              questions_list: response.as_json['items']
+    - 
+        url: >
+            /questions/{{ item.question_id }}/answers?order=desc&sort=activity&site=stackoverflow
+        with_items: questions_list
+        plugins:
+            - plugin: stdout_writer
+            - plugin: request_delay
+              seconds: 1

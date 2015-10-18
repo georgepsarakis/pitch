@@ -1,0 +1,37 @@
+base_url: https://api.github.com
+processes: 1
+threads: 1
+repeat: 1
+failfast: yes
+plugins:
+    - response_as_json
+    - assert_status_http_code
+requests:
+    headers:
+        User-Agent: pitch-json-api-client-test
+variables: {}
+steps:
+    -
+        url: /users
+        method: get
+        when: >
+          {{ 2 > 1 }}
+        params:
+            per_page: 3
+        plugins:
+            - plugin: assert_http_status_code
+            - plugin: request_delay
+              seconds: 1.0
+            - plugin: json_file_output
+              filename: "tmp/responses/json_output/github-users.json"
+              create_dirs: true
+            - plugin: post_register
+              user_list: response.as_json
+    -
+        url: >
+            /users/{{ item.login }}/repos
+        with_items: user_list
+        when: item.id >= 2 and item.id <=4
+        plugins:
+            - plugin: request_delay
+              seconds: 2.0
