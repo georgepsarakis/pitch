@@ -1,19 +1,25 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+from pitch.version import get_version
 
-setup(name='pitch',
-      version='1.0',
-      py_modules=['pitch'],
-      author='George Psarakis',
-      author_email='giwrgos.psarakis@gmail.com',
-      install_requires=[
+setup(
+    name='pitch',
+    version=get_version(),
+    author='George Psarakis',
+    author_email='giwrgos.psarakis@gmail.com',
+    install_requires=[
         'requests',       # URL fetching
         'argparse',       # Argument parsing (command-line use only)
-        'gevent',         # Multi-threading
-        'BeautifulSoup4', # Element extraction
+        'futures',        # Multi-threading
         'PyYaml',         # Configuration files
-        ],
-      entry_points={
+        'jinja2',         # Template engine
+        'six'             # Python 2/3 compatibility
+    ],
+    packages=list(
+        filter(lambda pkg: pkg.startswith('pitch'), find_packages())
+    ),
+    entry_points={
         'console_scripts': [
-          'pitch = pitch:main',
+            'pitch=pitch.main:main',
         ]
-      })
+    }
+)
