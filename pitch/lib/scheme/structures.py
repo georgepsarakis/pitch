@@ -106,6 +106,12 @@ class SchemeExecutor(object):
         step_context.set_step(step)
         self._step_context_proxy.set_context(step_context)
 
+    def _initialize_response_array(self, value):
+        if 'response_array' not in self._step_context_proxy.get_context():
+            self._step_context_proxy.get_context().add(
+                ContextParameter(name='response_array', value=value)
+            )
+
     def _create_scheme_commands(self, steps):
         client = CommandClient(CommandInvoker())
         for step in steps:
@@ -133,6 +139,13 @@ class SchemeExecutor(object):
                 lambda phase:
                     self._step_context_proxy.get_context().set_phase(phase),
                 'response'
+            )
+            inner_loop_commands.add_instruction(
+                lambda current_loop:
+                    self._initialize_response_array([])
+                    if current_loop.is_effective()
+                    else self._initialize_response_array(None),
+                loop
             )
             inner_loop_commands.add_instruction(self._process_response)
         return client
@@ -178,4 +191,6 @@ class SchemeExecutor(object):
         step_context.add(
             ContextParameter(name='response', value=step_context.response)
         )
+        if step_context.response_array is not None:
+            step_context.response_array.append(step_context.response)
         execute_plugins(step_context=step_context)
