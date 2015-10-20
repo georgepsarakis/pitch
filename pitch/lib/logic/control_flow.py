@@ -63,6 +63,9 @@ class Loop(ControlFlowStatement):
     def __reinitialize(self):
         self.__items = None
 
+    def is_effective(self):
+        return self.__command is not None
+
     @property
     def items(self):
         return self.__command_iterable
