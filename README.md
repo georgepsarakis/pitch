@@ -32,7 +32,7 @@ simplicity.
 
 ### Templating
 
-As already discussed in [Concepts](#Concepts), `pitch` reads instructions from
+As already discussed in [Concepts](#concepts), `pitch` reads instructions from
 `scheme` files. `Jinja2` template expressions can be widely used to allow
 dynamic context during execution.
 
@@ -48,6 +48,28 @@ plugins, custom plugins can be written and loaded separately. See the
 
 | Parameter | Required | Definition Levels | Type | Default | Description |
 | --------- | -------- | ----------------- | ---- | ------- | ----------- |
+| processes | No | - scheme | int | 1 | The total number of processes to
+spawn. Each process will spawn separate threads and each thread will execute
+ all the scheme steps in a separate context and session. |
+| threads | No | - scheme | int | 1 | Total number of threads for
+simultaneous scheme executions. |
+| repeat | No | - scheme | int | 1 | Each thread will repeat the scheme
+execution this many times. |
+| failfast | No | <ul><li>scheme</li><li>step</li></ul> | bool | False |
+This parameter instructs the `assert_http_status_code` plugin to stop
+execution if an unexpected HTTP status code is returned. |
+| base_url | Yes | <ul><li>scheme</li><li>step</li></ul> | unicode || The
+base URL which will be used to compose the absolute URL for each HTTP
+request. If HTTP scheme is omitted, **http** is assumed.|
+
+### Rules
+
+- Parameters defined on `step` level will override the same parameter given
+  on `scheme` level.
+- [Jinja2 template braces](http://jinja.pocoo.org/docs/dev/templates/#variables)
+can be omitted in `when` command expressions, as they
+will be automatically resolved from the current context.
+- Loop expression values must be iterables.
 
 ### Examples
 
