@@ -5,34 +5,60 @@ Writing small scripts using the Python library [requests](http://docs.python-req
 is already very easy, however a more structured and formalised way of composing a sequence of HTTP operations
 would increase reusability, brevity, expandability and clarity.
 
+## Concepts
+
+### Scheme Files
+
+Instructions files containing a list of `steps` which will dynamically generate
+a series of HTTP requests.
+
 ## Main Features
+
+### Session
+
+Each scheme execution runs using the same
+[requests.Session](http://docs.python-requests.org/en/latest/user/advanced/#session-objects).
+This means that each request is not necessarily isolated but can be part of
+a common browser HTTP flow.
 
 ### Control Flow
 
-`pitch` borrows certain concepts of Ansible's 
+To avoid reinventing the wheel, `pitch` borrows certain concepts from
+Ansible's
 [Loops](http://docs.ansible.com/ansible/playbooks_loops.html) & 
-[Conditionals](http://docs.ansible.com/ansible/playbooks_conditionals.html) for more advanced logic & processing.
+[Conditionals](http://docs.ansible.com/ansible/playbooks_conditionals.html)
+in order to enable more advanced logic & processing, while maintaining
+simplicity.
 
 ### Templating
 
-`pitch` reads instructions from `scheme` files. `Jinja2` template expressions can be widely used 
-to allow dynamic context during execution.
+As already discussed in [Concepts](#Concepts), `pitch` reads instructions from
+`scheme` files. `Jinja2` template expressions can be widely used to allow
+dynamic context during execution.
 
 ### Plugins
 
-`pitch` allows injection of additional functionality or pre/post-processing operations on `Request`/`Response` objects
-with the use of plugins. Apart from the core plugins, custom plugins can be written and loaded separately.
+Additional functionality or pre/post-processing operations on
+`Request`/`Response` objects with the use of plugins. Apart from the core
+plugins, custom plugins can be written and loaded separately. See the
+[Plugin Development Reference]
+(#developing-plugins).
 
-## Scheme File Examples
+## Scheme File Reference
 
-### GitHub Public API
+| Parameter | Required | Definition Levels | Type | Default | Description |
+| --------- | -------- | ----------------- | ---- | ------- | ----------- |
+
+### Examples
+
+#### GitHub Public API
 
 ```yaml
-base_url: https://api.github.com
 processes: 1
 threads: 1
 repeat: 1
 failfast: yes
+base_url: https://api.github.com
 plugins:
     - response_as_json
     - assert_status_http_code
