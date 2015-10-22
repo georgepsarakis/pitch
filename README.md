@@ -60,16 +60,18 @@ plugins, custom plugins can be written and loaded separately. See the
 
 ## Scheme File Reference
 
-| Parameter | Required | Definition | Type | Default | Description |
+| Parameter | Definition | Type | Default<sup>*</sup> | Description |
 | --------- | -------- | ---------- | ---- | ------- | ----------- |
-| processes | No | <ul><li>scheme</li></ul> | int | 1 | The total number of processes to spawn. Each process will spawn separate threads and each thread will execute all the scheme steps in a separate context and session. |
-| threads | No | <ul><li>scheme</li></ul> | int | 1 | Total number of threads for simultaneous scheme executions. |
-| repeat | No | <ul><li>scheme</li></ul> | int | 1 | Each thread will repeat the scheme execution this many times. |
-| failfast | No | <ul><li>scheme</li><li>step</li></ul> | bool | False | This parameter instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned. |
-| base_url | Yes | <ul><li>scheme</li><li>step</li></ul> | unicode || The base URL which will be used to compose the absolute URL for each HTTP request. If HTTP scheme is omitted, **http** is assumed.|
-| plugins | No | <ul><li>scheme</li><li>step</li></ul> | list | <ul><li>response_as_json</li><li>assert_status_http_code</li></ul> | A list of  plugins that will be executed at each step. If defined on `scheme` level, this list will be prepended to the `step` level defined plugin list, if one exists. |
-| requests | No | <ul><li>scheme</li></ul> | dict || Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
-| variables | No | <ul><li>scheme</li></ul> | dict || Variables that will be added to the context.|
+| processes | <ul><li>scheme</li></ul> | int | 1 | The total number of processes to spawn. Each process will spawn separate threads and each thread will execute all the scheme steps in a separate context and session. |
+| threads | <ul><li>scheme</li></ul> | int | 1 | Total number of threads for simultaneous scheme executions. |
+| repeat | <ul><li>scheme</li></ul> | int | 1 | Each thread will repeat the scheme execution this many times. |
+| failfast | <ul><li>scheme</li><li>step</li></ul> | bool | False | This parameter instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned. |
+| base_url | <ul><li>scheme</li><li>step</li></ul> | unicode || The base URL which will be used to compose the absolute URL for each HTTP request. If HTTP scheme is omitted, **http** is assumed.|
+| plugins | <ul><li>scheme</li><li>step</li></ul> | list | <ul><li>response_as_json</li><li>assert_status_http_code</li></ul> | A list of  plugins that will be executed at each step. If defined on `scheme` level, this list will be prepended to the step-level defined plugin list, if one exists. |
+| requests | <ul><li>scheme</li></ul> | dict || Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
+| variables | <ul><li>scheme</li></ul> | dict || Variables that will be added to the context.|
+
+<sup>*</sup> If no default value is specified, then the parameter is required.
 
 ### Rules
 

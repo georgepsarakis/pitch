@@ -36,11 +36,13 @@ nosetests.xml
 .project
 .pydevproject
 
+# Misc
 tmp/*
 *.log
 *.json
 *.yaml
 .idea*
+*~
 
 # virtualenv
 env3.4/*
