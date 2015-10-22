@@ -25,7 +25,7 @@ steps:
         url: /questions?order=desc&sort=activity&site=stackoverflow&pagesize=3
         plugins:
             - plugin: request_delay
-              seconds: 1
+              seconds: 1.0
             - plugin: post_register
               questions_list: response.as_json['items']
     - 
@@ -35,4 +35,4 @@ steps:
         plugins:
             - plugin: stdout_writer
             - plugin: request_delay
-              seconds: 1
+              seconds: 1.0

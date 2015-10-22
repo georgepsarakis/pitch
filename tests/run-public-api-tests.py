@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import unicode_literals, print_function
 import subprocess
 import sys
 
@@ -17,6 +18,6 @@ if __name__ == "__main__":
                 ]
             )
         except subprocess.CalledProcessError as e:
-            print '-- API TEST ERROR: {}'.format(api_name)
-            print e
+            print('-- API TEST ERROR: {}'.format(api_name))
+            print(e)
             sys.exit(e.returncode)
