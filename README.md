@@ -1,5 +1,7 @@
 # pitch
 
+[![Build Status](https://travis-ci.org/georgepsarakis/pitch.svg?branch=master)](https://travis-ci.org/georgepsarakis/pitch)
+
 HTTP handling is very common in daily development and operations tasks alike. 
 Writing small scripts using the Python library [requests](http://docs.python-requests.org/en/latest/) 
 is already very easy, however a more structured and formalised way of composing a sequence of HTTP operations
@@ -61,17 +63,17 @@ plugins, custom plugins can be written and loaded separately. See the
 ## Scheme File Reference
 
 | Parameter | Definition | Type | Default<sup>*</sup> | Description |
-| --------- | -------- | ---------- | ---- | ------- | ----------- |
-| processes | <ul><li>scheme</li></ul> | int | 1 | The total number of processes to spawn. Each process will spawn separate threads and each thread will execute all the scheme steps in a separate context and session. |
-| threads | <ul><li>scheme</li></ul> | int | 1 | Total number of threads for simultaneous scheme executions. |
-| repeat | <ul><li>scheme</li></ul> | int | 1 | Each thread will repeat the scheme execution this many times. |
-| failfast | <ul><li>scheme</li><li>step</li></ul> | bool | False | This parameter instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned. |
+| --------- |----------- | ---- | ------------------- | ----------- |
+| processes | <ul><li>scheme</li></ul> | int | `1` | The total number of processes to spawn. Each process will spawn separate threads. |
+| threads | <ul><li>scheme</li></ul> | int | `1` | Total number of threads for simultaneous scheme executions. Each thread will execute all scheme steps in a separate context and session. |
+| repeat | <ul><li>scheme</li></ul> | int | `1` | Each thread will repeat the scheme execution this many times. |
+| failfast | <ul><li>scheme</li><li>step</li></ul> | bool | `False` | Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned. |
 | base_url | <ul><li>scheme</li><li>step</li></ul> | unicode || The base URL which will be used to compose the absolute URL for each HTTP request. If HTTP scheme is omitted, **http** is assumed.|
-| plugins | <ul><li>scheme</li><li>step</li></ul> | list | <ul><li>response_as_json</li><li>assert_status_http_code</li></ul> | A list of  plugins that will be executed at each step. If defined on `scheme` level, this list will be prepended to the step-level defined plugin list, if one exists. |
-| requests | <ul><li>scheme</li></ul> | dict || Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
-| variables | <ul><li>scheme</li></ul> | dict || Variables that will be added to the context.|
+| plugins | <ul><li>scheme</li><li>step</li></ul> | list | `['response_as_json', 'assert_status_http_code']` | A list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists. |
+| requests | <ul><li>scheme</li></ul> | dict |`{}`| Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
+| variables | <ul><li>scheme</li></ul> | dict |`{}`| Variables that will be added to the context.|
 
-<sup>*</sup> If no default value is specified, then the parameter is required.
+<strong><sup>*</sup></strong> If no default value is specified, then the parameter is required.
 
 ### Rules
 
