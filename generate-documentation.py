@@ -100,10 +100,21 @@ for parameter_details in scheme_file_reference:
         elif index == 4:
             parameter_details[index] = replace_whitespace.sub(' ', detail)
 
+scheme_file_reference_desc = [
+    [detail[0], detail[1], detail[2], detail[4]]
+    for detail in scheme_file_reference
+]
+
+scheme_file_reference_defaults = [
+    [detail[0], detail[3]]
+    for detail in scheme_file_reference
+]
+
 with open('README.md', 'w') as f:
     f.write(
         readme_template.render(
             github_api_example=github_api_example,
-            scheme_file_reference=scheme_file_reference
+            scheme_file_reference_desc=scheme_file_reference_desc,
+            scheme_file_reference_defaults=scheme_file_reference_defaults
         )
     )

@@ -63,24 +63,42 @@ plugins, custom plugins can be written and loaded separately. See the
 
 ## Scheme File Reference
 
-| Parameter | Definition | Type | Default<sup>*</sup> | Description |
-| --------- |----------- | ---- | ------------------- | ----------- |
-|`processes`|<ul><li>scheme</li></ul>|int|`1`|The total number of processes to spawn. Each process will initialize separate threads.|
-|`threads`|<ul><li>scheme</li></ul>|int|`1`|Total number of threads for simultaneous scheme executions. Each thread will execute all scheme steps in a separate context and session.|
-|`repeat`|<ul><li>scheme</li></ul>|int|`1`|Scheme execution repetition count for each thread.|
-|`failfast`|<ul><li>scheme</li><li>step</li></ul>|bool|`False`|Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned.|
-|`base_url`|<ul><li>scheme</li><li>step</li></ul>|string||The base URL which will be used to compose the absolute URL for each HTTP request.|
-|`plugins`|<ul><li>scheme</li><li>step</li></ul>|list|`['response_as_json', 'assert_status_http_code']`|The list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists.|
-|`requests`|<ul><li>scheme</li></ul>|dict|`{}`|Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
-|`variables`|<ul><li>scheme</li><li>step</li></ul>|dict|`{}`|Mapping of predefined variables that will be added to the context for each request.|
-|`steps`|<ul><li>scheme</li></ul>|list||List of scheme steps.|
-|`when`|<ul><li>step</li></ul>|string|`true`|Conditional expression determining whether to run this step or not. If combined with a loop statement, will be evaluated in every loop cycle.|
-|`with_items`|<ul><li>step</li></ul>|iterable|`[None]`|Execute the step instructions by iterating over the given collection items. Each item will be available in the Jinja2 context as `item`.|
-|`with_indexed_items`|<ul><li>step</li></ul>|iterable|`[None]`|Same as `with_items`, but the `item` context variable is a tuple with the zero-based index in the iterable as the first element and the actual item as the second element.|
-|`with_nested`|<ul><li>step</li></ul>|list of iterables|`[None]`|Same as `with_items` but has a list of iterables as input and creates a nested loop. The context variable `item` will be a tuple containing the current item of the first iterable at index 0, the current item of the second iterable at index 1 and so on.|
+| Parameter | Definition | Type | Description |
+| --------- |----------- | ---- | ----------- |
+|`processes`|<ul><li>scheme</li></ul>|int|The total number of processes to spawn. Each process will initialize separate threads.|
+|`threads`|<ul><li>scheme</li></ul>|int|Total number of threads for simultaneous scheme executions. Each thread will execute all scheme steps in a separate context and session.|
+|`repeat`|<ul><li>scheme</li></ul>|int|Scheme execution repetition count for each thread.|
+|`failfast`|<ul><li>scheme</li><li>step</li></ul>|bool|Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned.|
+|`base_url`|<ul><li>scheme</li><li>step</li></ul>|string|The base URL which will be used to compose the absolute URL for each HTTP request.|
+|`plugins`|<ul><li>scheme</li><li>step</li></ul>|list|The list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists.|
+|`requests`|<ul><li>scheme</li></ul>|dict|Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
+|`variables`|<ul><li>scheme</li><li>step</li></ul>|dict|Mapping of predefined variables that will be added to the context for each request.|
+|`steps`|<ul><li>scheme</li></ul>|list|List of scheme steps.|
+|`when`|<ul><li>step</li></ul>|string|Conditional expression determining whether to run this step or not. If combined with a loop statement, will be evaluated in every loop cycle.|
+|`with_items`|<ul><li>step</li></ul>|iterable|Execute the step instructions by iterating over the given collection items. Each item will be available in the Jinja2 context as `item`.|
+|`with_indexed_items`|<ul><li>step</li></ul>|iterable|Same as `with_items`, but the `item` context variable is a tuple with the zero-based index in the iterable as the first element and the actual item as the second element.|
+|`with_nested`|<ul><li>step</li></ul>|list of iterables|Same as `with_items` but has a list of iterables as input and creates a nested loop. The context variable `item` will be a tuple containing the current item of the first iterable at index 0, the current item of the second iterable at index 1 and so on.|
 
 
 > On step-level definitions, any non-reserved keywords will be passed directly to `requests.Request` e.g. `params`.
+
+| Parameter | Default<sup>*</sup> |
+| --------- | ------------------- |
+|`processes`|`1`|
+|`threads`|`1`|
+|`repeat`|`1`|
+|`failfast`|`False`|
+|`base_url`||
+|`plugins`|`['response_as_json', 'assert_status_http_code']`|
+|`requests`|`{}`|
+|`variables`|`{}`|
+|`steps`||
+|`when`|`true`|
+|`with_items`|`[None]`|
+|`with_indexed_items`|`[None]`|
+|`with_nested`|`[None]`|
+
+
 
 <strong><sup>*</sup></strong> If no default value is specified, then the parameter is required.
 

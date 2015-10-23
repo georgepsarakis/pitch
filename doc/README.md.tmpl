@@ -63,13 +63,20 @@ plugins, custom plugins can be written and loaded separately. See the
 
 ## Scheme File Reference
 
-| Parameter | Definition | Type | Default<sup>*</sup> | Description |
-| --------- |----------- | ---- | ------------------- | ----------- |
-{% for parameter_details in scheme_file_reference -%}
+| Parameter | Definition | Type | Description |
+| --------- |----------- | ---- | ----------- |
+{% for parameter_details in scheme_file_reference_desc -%}
 |{{ parameter_details|join('|') }}|
 {% endfor %}
 
 > On step-level definitions, any non-reserved keywords will be passed directly to `requests.Request` e.g. `params`.
+
+| Parameter | Default<sup>*</sup> |
+| --------- | ------------------- |
+{% for parameter_details in scheme_file_reference_defaults -%}
+|{{ parameter_details|join('|') }}|
+{% endfor %}
+
 
 <strong><sup>*</sup></strong> If no default value is specified, then the parameter is required.
 
