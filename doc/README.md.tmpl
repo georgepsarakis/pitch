@@ -7,6 +7,26 @@ Writing small scripts using the Python library [requests](http://docs.python-req
 is already very easy, however a more structured and formalised way of composing a sequence of HTTP operations
 would increase reusability, brevity, expandability and clarity.
 
+## Installation
+
+```bash
+$ git clone https://github.com/georgepsarakis/pitch.git
+$ pip install .
+```
+
+## Examples
+
+### GitHub Public API
+
+The following scheme file will:
+
+- Fetch the details of the first 10 users
+- Fetch the repositories for users with id in the range [2,4]
+
+```yaml
+{{ github_api_example }}
+```
+
 ## Concepts
 
 ### Scheme Files
@@ -91,12 +111,4 @@ will be automatically resolved from the current context.
 - Plugins are given in a list, because some plugins may depend on others, so the execution sequence is important. Also, a plugin may be requested multiple times.
 - The plugin list must contain both request & response plugins. This was introduced for simplicity and less boilerplate syntax. At each phase, the appropriate subset of plugins will be selected and executed.
 
-
-### Examples
-
-#### GitHub Public API
-
-```yaml
-{{ github_api_example }}
-```
 

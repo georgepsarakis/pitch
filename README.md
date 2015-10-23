@@ -7,6 +7,84 @@ Writing small scripts using the Python library [requests](http://docs.python-req
 is already very easy, however a more structured and formalised way of composing a sequence of HTTP operations
 would increase reusability, brevity, expandability and clarity.
 
+## Installation
+
+```bash
+$ git clone https://github.com/georgepsarakis/pitch.git
+$ pip install .
+```
+
+## Examples
+
+### GitHub Public API
+
+The following scheme file will:
+
+- Fetch the details of the first 10 users
+- Fetch the repositories for users with id in the range [2,4]
+
+```yaml
+# Single process
+processes: 1
+# Single-threaded
+threads: 1
+# Execute only once per thread
+repeat: 1
+# Stop execution immediately if an
+# unexpected HTTP status code is returned.
+# By default error codes are defined
+# as greater-equal to 400.
+failfast: yes
+base_url: https://api.github.com
+plugins:
+    - response_as_json
+    - assert_status_http_code
+requests:
+    headers:
+        User-Agent: pitch-json-api-client-test
+variables: {}
+steps:
+    -
+		# The relative URL
+        url: /users
+		# HTTP method (always GET by default)
+        method: get
+		# Conditionals are specified using the `when` keyword.
+		# Any valid Jinja expression is allowed.
+        # The following example evaluates to true.
+        when: >
+          {{ 2 > 1 }}
+        # Any non-reserved keywords will be passed directly to
+		# `requests.Request` objects as parameters.
+        # Here we specify GET parameters with `params`.
+        params:
+            per_page: 3
+        # The list of request/response plugins
+        # that should be executed.
+        # If not specified the scheme-level default plugins
+        # list will be used.
+        plugins:
+            - plugin: assert_http_status_code
+            - plugin: request_delay
+              seconds: 1.0
+            - plugin: post_register
+              user_list: response.as_json
+    # Fetch the list of repositories for each user
+	# if the user id is in the range [2,4]
+	-
+        url: >
+            /users/{{ item.login }}/repos
+        # This iterable has been added to the context 
+        # by the post_register plugin in the previous step.
+        with_items: user_list
+        # Conditionals are dynamically evaluated at each loop cycle.
+        when: item.id >= 2 and item.id <=4
+        plugins:
+            - plugin: request_delay
+              seconds: 2.0
+
+```
+
 ## Concepts
 
 ### Scheme Files
@@ -113,69 +191,3 @@ will be automatically resolved from the current context.
 - Plugins are given in a list, because some plugins may depend on others, so the execution sequence is important. Also, a plugin may be requested multiple times.
 - The plugin list must contain both request & response plugins. This was introduced for simplicity and less boilerplate syntax. At each phase, the appropriate subset of plugins will be selected and executed.
 
-
-### Examples
-
-#### GitHub Public API
-
-```yaml
-# Single process
-processes: 1
-# Single-threaded
-threads: 1
-# Execute only once per thread
-repeat: 1
-# Stop execution immediately if an
-# unexpected HTTP status code is returned.
-# By default error codes are defined
-# as greater-equal to 400.
-failfast: yes
-base_url: https://api.github.com
-plugins:
-    - response_as_json
-    - assert_status_http_code
-requests:
-    headers:
-        User-Agent: pitch-json-api-client-test
-variables: {}
-steps:
-    -
-		# The relative URL
-        url: /users
-		# HTTP method (always GET by default)
-        method: get
-		# Conditionals are specified using the `when` keyword.
-		# Any valid Jinja expression is allowed.
-        # The following example evaluates to true.
-        when: >
-          {{ 2 > 1 }}
-        # Any non-reserved keywords will be passed directly to
-		# `requests.Request` objects as parameters.
-        # Here we specify GET parameters with `params`.
-        params:
-            per_page: 3
-        # The list of request/response plugins
-        # that should be executed.
-        # If not specified the scheme-level default plugins
-        # list will be used.
-        plugins:
-            - plugin: assert_http_status_code
-            - plugin: request_delay
-              seconds: 1.0
-            - plugin: post_register
-              user_list: response.as_json
-    # Fetch the list of repositories for each user
-	# if the user id is in the range [2,4]
-	-
-        url: >
-            /users/{{ item.login }}/repos
-        # This iterable has been added to the context 
-        # by the post_register plugin in the previous step.
-        with_items: user_list
-        # Conditionals are dynamically evaluated at each loop cycle.
-        when: item.id >= 2 and item.id <=4
-        plugins:
-            - plugin: request_delay
-              seconds: 2.0
-
-```
