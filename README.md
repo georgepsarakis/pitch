@@ -69,11 +69,11 @@ plugins, custom plugins can be written and loaded separately. See the
 |`threads`|<ul><li>scheme</li></ul>|int|`1`|Total number of threads for simultaneous scheme executions. Each thread will execute all scheme steps in a separate context and session.|
 |`repeat`|<ul><li>scheme</li></ul>|int|`1`|Scheme execution repetition count for each thread.|
 |`failfast`|<ul><li>scheme</li><li>step</li></ul>|bool|`False`|Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned.|
-|`base_url`|<ul><li>scheme</li><li>step</li></ul>|string|``|The base URL which will be used to compose the absolute URL for each HTTP request.|
+|`base_url`|<ul><li>scheme</li><li>step</li></ul>|string||The base URL which will be used to compose the absolute URL for each HTTP request.|
 |`plugins`|<ul><li>scheme</li><li>step</li></ul>|list|`['response_as_json', 'assert_status_http_code']`|The list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists.|
 |`requests`|<ul><li>scheme</li></ul>|dict|`{}`|Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
 |`variables`|<ul><li>scheme</li><li>step</li></ul>|dict|`{}`|Mapping of predefined variables that will be added to the context for each request.|
-|`steps`|<ul><li>scheme</li></ul>|list|``|List of scheme steps.|
+|`steps`|<ul><li>scheme</li></ul>|list||List of scheme steps.|
 |`when`|<ul><li>step</li></ul>|string|`true`|Conditional expression determining whether to run this step or not. If combined with a loop statement, will be evaluated in every loop cycle.|
 |`with_items`|<ul><li>step</li></ul>|iterable|`[None]`|Execute the step instructions by iterating over the given collection items. Each item will be available in the Jinja2 context as `item`.|
 |`with_indexed_items`|<ul><li>step</li></ul>|iterable|`[None]`|Same as `with_items`, but the `item` context variable is a tuple with the zero-based index in the iterable as the first element and the actual item as the second element.|

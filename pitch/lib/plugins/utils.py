@@ -5,6 +5,7 @@ import sys
 from copy import deepcopy
 import imp
 import operator
+import six
 from ..common.errors import InvalidPluginPhaseError, UnknownPluginError
 from ...plugins import PLUGINS, VALID_PHASES
 from ..common.utils import stop_execution
@@ -64,7 +65,7 @@ def list_plugins():
             '\n'.join(
                 map(
                     lambda plugin_info: '|\t '.join(
-                        map(unicode, plugin_info)
+                        map(six.text_type, plugin_info)
                     ),
                     plugin_list
                 )

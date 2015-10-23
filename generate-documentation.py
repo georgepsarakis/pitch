@@ -91,7 +91,8 @@ code_wrap = '`{}`'.format
 for parameter_details in scheme_file_reference:
     for index, detail in enumerate(parameter_details):
         if index in [0, 3]:
-            parameter_details[index] = code_wrap(detail)
+            if detail != '':
+                parameter_details[index] = code_wrap(detail)
         elif index == 1:
             parameter_details[index] = list_wrap(
                 ''.join(map(list_item_wrap, detail))
