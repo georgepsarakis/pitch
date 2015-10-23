@@ -22,6 +22,7 @@ The step definition also may include:
 
 - Conditional
 - Request parameters
+- Loops
 - List of Request/Response Plugins and their parameters
 
 ### Phases
@@ -64,14 +65,22 @@ plugins, custom plugins can be written and loaded separately. See the
 
 | Parameter | Definition | Type | Default<sup>*</sup> | Description |
 | --------- |----------- | ---- | ------------------- | ----------- |
-| processes | <ul><li>scheme</li></ul> | int | `1` | The total number of processes to spawn. Each process will spawn separate threads. |
-| threads | <ul><li>scheme</li></ul> | int | `1` | Total number of threads for simultaneous scheme executions. Each thread will execute all scheme steps in a separate context and session. |
-| repeat | <ul><li>scheme</li></ul> | int | `1` | Each thread will repeat the scheme execution this many times. |
-| failfast | <ul><li>scheme</li><li>step</li></ul> | bool | `False` | Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned. |
-| base_url | <ul><li>scheme</li><li>step</li></ul> | unicode || The base URL which will be used to compose the absolute URL for each HTTP request. If HTTP scheme is omitted, **http** is assumed.|
-| plugins | <ul><li>scheme</li><li>step</li></ul> | list | `['response_as_json', 'assert_status_http_code']` | A list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists. |
-| requests | <ul><li>scheme</li></ul> | dict |`{}`| Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
-| variables | <ul><li>scheme</li></ul> | dict |`{}`| Variables that will be added to the context.|
+|`processes`|<ul><li>scheme</li></ul>|int|`1`|The total number of processes to spawn. Each process will initialize separate threads.|
+|`threads`|<ul><li>scheme</li></ul>|int|`1`|Total number of threads for simultaneous scheme executions. Each thread will execute all scheme steps in a separate context and session.|
+|`repeat`|<ul><li>scheme</li></ul>|int|`1`|Scheme execution repetition count for each thread.|
+|`failfast`|<ul><li>scheme</li><li>step</li></ul>|bool|`False`|Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned.|
+|`base_url`|<ul><li>scheme</li><li>step</li></ul>|string|``|The base URL which will be used to compose the absolute URL for each HTTP request.|
+|`plugins`|<ul><li>scheme</li><li>step</li></ul>|list|`['response_as_json', 'assert_status_http_code']`|The list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists.|
+|`requests`|<ul><li>scheme</li></ul>|dict|`{}`|Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
+|`variables`|<ul><li>scheme</li><li>step</li></ul>|dict|`{}`|Mapping of predefined variables that will be added to the context for each request.|
+|`steps`|<ul><li>scheme</li></ul>|list|``|List of scheme steps.|
+|`when`|<ul><li>step</li></ul>|string|`true`|Conditional expression determining whether to run this step or not. If combined with a loop statement, will be evaluated in every loop cycle.|
+|`with_items`|<ul><li>step</li></ul>|iterable|`[None]`|Execute the step instructions by iterating over the given collection items. Each item will be available in the Jinja2 context as `item`.|
+|`with_indexed_items`|<ul><li>step</li></ul>|iterable|`[None]`|Same as `with_items`, but the `item` context variable is a tuple with the zero-based index in the iterable as the first element and the actual item as the second element.|
+|`with_nested`|<ul><li>step</li></ul>|list of iterables|`[None]`|Same as `with_items` but has a list of iterables as input and creates a nested loop. The context variable `item` will be a tuple containing the current item of the first iterable at index 0, the current item of the second iterable at index 1 and so on.|
+
+
+> On step-level definitions, any non-reserved keywords will be passed directly to `requests.Request` e.g. `params`.
 
 <strong><sup>*</sup></strong> If no default value is specified, then the parameter is required.
 
@@ -98,9 +107,9 @@ processes: 1
 threads: 1
 # Execute only once per thread
 repeat: 1
-# Stop execution immediately if an 
+# Stop execution immediately if an
 # unexpected HTTP status code is returned.
-# By default error codes are defined 
+# By default error codes are defined
 # as greater-equal to 400.
 failfast: yes
 base_url: https://api.github.com
@@ -118,7 +127,8 @@ steps:
 		# HTTP method (always GET by default)
         method: get
 		# Conditionals are specified using the `when` keyword.
-		# The following will always evaluate to true.
+		# Any valid Jinja expression is allowed.
+        # The following example evaluates to true.
         when: >
           {{ 2 > 1 }}
         # Any non-reserved keywords will be passed directly to
@@ -126,6 +136,10 @@ steps:
         # Here we specify GET parameters with `params`.
         params:
             per_page: 3
+        # The list of request/response plugins
+        # that should be executed.
+        # If not specified the scheme-level default plugins
+        # list will be used.
         plugins:
             - plugin: assert_http_status_code
             - plugin: request_delay
@@ -137,9 +151,13 @@ steps:
 	-
         url: >
             /users/{{ item.login }}/repos
+        # This iterable has been added to the context 
+        # by the post_register plugin in the previous step.
         with_items: user_list
+        # Conditionals are dynamically evaluated at each loop cycle.
         when: item.id >= 2 and item.id <=4
         plugins:
             - plugin: request_delay
               seconds: 2.0
+
 ```

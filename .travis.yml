@@ -4,6 +4,9 @@ python:
     - "3.4"
 install:
     - pip install .
+    - pip install flake8
 script:
+    - flake8 pitch/
+    - flake8 tests/
     - cd tests; ./run-public-api-tests.py
   

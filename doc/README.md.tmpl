@@ -1,0 +1,95 @@
+# pitch
+
+[![Build Status](https://travis-ci.org/georgepsarakis/pitch.svg?branch=master)](https://travis-ci.org/georgepsarakis/pitch)
+
+HTTP handling is very common in daily development and operations tasks alike. 
+Writing small scripts using the Python library [requests](http://docs.python-requests.org/en/latest/) 
+is already very easy, however a more structured and formalised way of composing a sequence of HTTP operations
+would increase reusability, brevity, expandability and clarity.
+
+## Concepts
+
+### Scheme Files
+
+Instructions files containing a list of `steps` which will dynamically generate
+a series of HTTP requests.
+
+### Step
+
+A `step` will be translated dynamically to one or more HTTP requests. 
+
+The step definition also may include:
+
+- Conditional
+- Request parameters
+- Loops
+- List of Request/Response Plugins and their parameters
+
+### Phases
+
+Each step execution is divided in two phases: `request` and `response` phase.
+
+## Main Features
+
+### Session
+
+Each scheme execution runs using the same
+[requests.Session](http://docs.python-requests.org/en/latest/user/advanced/#session-objects).
+This means that each request is not necessarily isolated but can be part of
+a common browser HTTP flow.
+
+### Control Flow
+
+To avoid reinventing the wheel, `pitch` borrows certain concepts from
+Ansible's
+[Loops](http://docs.ansible.com/ansible/playbooks_loops.html) & 
+[Conditionals](http://docs.ansible.com/ansible/playbooks_conditionals.html)
+in order to enable more advanced logic & processing, while maintaining
+simplicity.
+
+### Templating
+
+As already discussed in [Concepts](#concepts), `pitch` reads instructions from
+`scheme` files. `Jinja2` template expressions can be widely used to allow
+dynamic context during execution.
+
+### Plugins
+
+Additional functionality or pre/post-processing operations on
+`Request`/`Response` objects with the use of plugins. Apart from the core
+plugins, custom plugins can be written and loaded separately. See the
+[Plugin Development Reference]
+(#developing-plugins).
+
+## Scheme File Reference
+
+| Parameter | Definition | Type | Default<sup>*</sup> | Description |
+| --------- |----------- | ---- | ------------------- | ----------- |
+{% for parameter_details in scheme_file_reference -%}
+|{{ parameter_details|join('|') }}|
+{% endfor %}
+
+> On step-level definitions, any non-reserved keywords will be passed directly to `requests.Request` e.g. `params`.
+
+<strong><sup>*</sup></strong> If no default value is specified, then the parameter is required.
+
+### Rules
+
+- Parameters defined on `step` level will override the same parameter given
+  on `scheme` level.
+- [Jinja2 template braces](http://jinja.pocoo.org/docs/dev/templates/#variables)
+can be omitted in `when` command expressions, as they
+will be automatically resolved from the current context.
+- Loop expression values must be iterables.
+- Plugins are given in a list, because some plugins may depend on others, so the execution sequence is important. Also, a plugin may be requested multiple times.
+- The plugin list must contain both request & response plugins. This was introduced for simplicity and less boilerplate syntax. At each phase, the appropriate subset of plugins will be selected and executed.
+
+
+### Examples
+
+#### GitHub Public API
+
+```yaml
+{{ github_api_example }}
+```
+
