@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import inspect
 import itertools
+import re
 import sys
 from copy import deepcopy
 import imp
@@ -44,15 +45,22 @@ def verify_plugins(given_plugins):
 def list_plugins():
     plugin_list = []
     for phase, available_plugins in PLUGINS.iteritems():
-        plugin_list.append(('\n-- {}'.format(phase.title()), '', ''))
+        title = phase.title()
+        plugin_list.append(('\n{}'.format(title),))
+        plugin_list.append(('=' * len(title),))
         phase_plugin_list = []
         for name, plugin_class in available_plugins.iteritems():
             plugin_args = inspect.getargspec(plugin_class.__init__).args
             plugin_args.remove('self')
+            docstring = re.sub(
+                r'\s+',
+                ' ',
+                six.text_type(plugin_class.__doc__).split("\n")[0]
+            )
             phase_plugin_list.append(
                 (
                     '{:<24}'.format(name),
-                    plugin_class.__doc__,
+                    docstring,
                     ','.join(plugin_args)
                 )
             )
