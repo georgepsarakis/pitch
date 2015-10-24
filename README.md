@@ -39,8 +39,8 @@ repeat: 1
 failfast: yes
 base_url: https://api.github.com
 plugins:
-    - response_as_json
-    - assert_status_http_code
+    - plugin: request_delay
+      seconds: 1.0
 requests:
     headers:
         User-Agent: pitch-json-api-client-test
@@ -66,9 +66,6 @@ steps:
         # If not specified the scheme-level default plugins
         # list will be used.
         plugins:
-            - plugin: assert_http_status_code
-            - plugin: request_delay
-              seconds: 1.0
             - plugin: post_register
               user_list: response.as_json
     # Fetch the list of repositories for each user
@@ -81,9 +78,6 @@ steps:
         with_items: user_list
         # Conditionals are dynamically evaluated at each loop cycle.
         when: item.id >= 2 and item.id <=4
-        plugins:
-            - plugin: request_delay
-              seconds: 2.0
 
 ```
 
@@ -152,6 +146,8 @@ plugins, custom plugins can be written and loaded separately. See the
 |`failfast`|<ul><li>scheme</li><li>step</li></ul>|bool|Instructs the `assert_http_status_code` plugin to stop execution if an unexpected HTTP status code is returned.|
 |`base_url`|<ul><li>scheme</li><li>step</li></ul>|string|The base URL which will be used to compose the absolute URL for each HTTP request.|
 |`plugins`|<ul><li>scheme</li><li>step</li></ul>|list|The list of plugins that will be executed at each step. If defined on scheme-level, this list will be prepended to the step-level defined plugin list, if one exists.|
+|`use_default_plugins`|<ul><li>scheme</li><li>step</li></ul>|bool|Whether to add the list of default plugins (see `plugins`) to the defined list of plugins for a step. If no plugins have been defined for a step and this parameter is set to `true`, only the default plugins will be executed.|
+|`use_scheme_plugins`|<ul><li>scheme</li><li>step</li></ul>|bool|Whether to add the list of scheme-level plugin definitions to this step.|
 |`requests`|<ul><li>scheme</li></ul>|dict|Parameters to be passed directly to `requests.Request` objects at each HTTP request.|
 |`variables`|<ul><li>scheme</li><li>step</li></ul>|dict|Mapping of predefined variables that will be added to the context for each request.|
 |`steps`|<ul><li>scheme</li></ul>|list|List of scheme steps.|
@@ -168,9 +164,11 @@ plugins, custom plugins can be written and loaded separately. See the
 |`processes`|`1`|
 |`threads`|`1`|
 |`repeat`|`1`|
-|`failfast`|`False`|
+|`failfast`|`false`|
 |`base_url`||
 |`plugins`|`['response_as_json', 'assert_status_http_code']`|
+|`use_default_plugins`|`true`|
+|`use_scheme_plugins`|`true`|
 |`requests`|`{}`|
 |`variables`|`{}`|
 |`steps`||

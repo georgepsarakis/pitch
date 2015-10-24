@@ -5,7 +5,7 @@ import six
 import yaml
 from yaml import SafeLoader
 from ..plugins.utils import execute_plugins
-from ..plugins.structures import PluginCollection
+from ..plugins.structures import PitchPluginCollection
 from ..templating.structures import PitchTemplate, RecursiveTemplateRenderer
 from ..common.structures import PitchDict, PitchRequest
 from ..scheme.context import (
@@ -168,7 +168,7 @@ class SchemeExecutor(object):
         step_context = self._step_context_proxy.get_context()
         step_context.analyze()
         request = PitchRequest()
-        request.plugins = PluginCollection()
+        request.plugins = PitchPluginCollection()
         step_context.add(ContextParameter(name='request', value=request))
         execute_plugins(step_context=step_context)
         request.update(**step_context.get_request_parameters())

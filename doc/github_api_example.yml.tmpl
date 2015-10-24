@@ -11,8 +11,8 @@ repeat: 1
 failfast: yes
 base_url: https://api.github.com
 plugins:
-    - response_as_json
-    - assert_status_http_code
+    - plugin: request_delay
+      seconds: 1.0
 requests:
     headers:
         User-Agent: pitch-json-api-client-test
@@ -38,9 +38,6 @@ steps:
         # If not specified the scheme-level default plugins
         # list will be used.
         plugins:
-            - plugin: assert_http_status_code
-            - plugin: request_delay
-              seconds: 1.0
             - plugin: post_register
               user_list: response.as_json
     # Fetch the list of repositories for each user
@@ -53,6 +50,3 @@ steps:
         with_items: user_list
         # Conditionals are dynamically evaluated at each loop cycle.
         when: item.id >= 2 and item.id <=4
-        plugins:
-            - plugin: request_delay
-              seconds: 2.0

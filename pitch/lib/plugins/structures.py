@@ -3,7 +3,7 @@ from copy import copy
 from collections import MutableSequence
 
 
-class PluginCollection(MutableSequence):
+class PitchPluginCollection(MutableSequence):
     def __init__(self, plugin_list=None):
         if plugin_list is None:
             self._plugins = []

@@ -27,7 +27,7 @@ scheme_file_reference = [
         """Scheme execution repetition count for each thread."""
     ],
     [
-        'failfast', ['scheme', 'step'], 'bool', 'False',
+        'failfast', ['scheme', 'step'], 'bool', 'false',
         """Instructs the `assert_http_status_code` plugin to stop execution
         if an unexpected HTTP status code is returned."""
     ],
@@ -42,6 +42,18 @@ scheme_file_reference = [
         """The list of plugins that will be executed at each step.
         If defined on scheme-level, this list will be prepended
         to the step-level defined plugin list, if one exists."""
+    ],
+    [
+        'use_default_plugins', ['scheme', 'step'], 'bool', 'true',
+        """Whether to add the list of default plugins (see `plugins`)
+        to the defined list of plugins for a step. If no plugins have been
+        defined for a step and this parameter is set to `true`, only
+        the default plugins will be executed."""
+    ],
+    [
+        'use_scheme_plugins', ['scheme', 'step'], 'bool', 'true',
+        """Whether to add the list of scheme-level plugin definitions to
+        this step."""
     ],
     [
         'requests', ['scheme'], 'dict', '{}',

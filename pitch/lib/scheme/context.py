@@ -4,7 +4,7 @@ import six
 from ..common.structures import ReadOnlyContainer, PitchDict
 from ..templating.structures import PitchTemplate
 from ..common.utils import compose_url
-from ..plugins.structures import PluginCollection
+from ..plugins.structures import PitchPluginCollection
 
 
 class SchemeStepContext(object):
@@ -17,8 +17,8 @@ class SchemeStepContext(object):
         'with_nested'
     ]
     DEFAULT_PLUGINS = [
-        'assert_http_status_code',
-        'response_as_json'
+        PitchDict(plugin=PitchTemplate('assert_http_status_code')),
+        PitchDict(plugin=PitchTemplate('response_as_json'))
     ]
 
     def __init__(self, preprocessed_scheme):
@@ -28,11 +28,6 @@ class SchemeStepContext(object):
         self.phase = None
         self.template_context = None
         self.renderer = None
-        self._default_plugins = PluginCollection()
-        for plugin_name in self.DEFAULT_PLUGINS:
-            self._default_plugins.append(
-                PitchDict(plugin=PitchTemplate(plugin_name))
-            )
 
     @property
     def scheme(self):
@@ -67,7 +62,9 @@ class SchemeStepContext(object):
         step_defaults = {
             'base_url': '',
             'url': '',
-            'method': 'GET'
+            'method': 'GET',
+            'use_default_plugins': True,
+            'use_scheme_plugins': True
         }
         self.processed_step = PitchDict(deepcopy(self.step))
         self.processed_step.update({
@@ -89,12 +86,18 @@ class SchemeStepContext(object):
             self.processed_step['url']
         )
         self.processed_step['method'] = self.processed_step['method'].upper()
-        if 'plugins' not in self.processed_step:
-            self.processed_step['plugins'] = copy(self._default_plugins)
+        step_plugins = self.processed_step.setdefault('plugins', [])
+        if self.processed_step['use_default_plugins']:
+            default_plugins = deepcopy(self.DEFAULT_PLUGINS)
         else:
-            plugins = PluginCollection(list(self._default_plugins))
-            plugins.extend(self.processed_step['plugins'])
-            self.processed_step['plugins'] = plugins
+            default_plugins = []
+        if self.processed_step['use_scheme_plugins']:
+            scheme_plugins = self._preprocessed_scheme.get('plugins', [])
+        else:
+            scheme_plugins = []
+        self.processed_step['plugins'] = PitchPluginCollection(
+            default_plugins + scheme_plugins + step_plugins
+        )
         requested_plugin_names = [
             self.renderer(plugin_details['plugin'])
             for plugin_details in self.processed_step['plugins']
