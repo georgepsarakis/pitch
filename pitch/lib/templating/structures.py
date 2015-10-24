@@ -1,18 +1,19 @@
 from __future__ import unicode_literals
 import uuid
 import collections
-from jinja2 import Template
+from jinja2 import Environment
 import six
 from ..common.structures import PitchDict
-from .jinja_custom_filters import filters, tests
+from .jinja_custom_extensions import filters, tests
 
 
-class PitchTemplate(Template):
+class PitchTemplate(object):
     def __init__(self, template_string):
         self._template_string = template_string
-        super(PitchTemplate, self).__new__(Template, template_string)
-        self.environment.filters.update(filters)
-        self.environment.tests.update(tests)
+        self._environment = Environment()
+        self._environment.filters.update(filters)
+        self._environment.tests.update(tests)
+        self._template = self._environment.from_string(template_string)
 
     def __deepcopy__(self, _):
         return PitchTemplate(self._template_string)
@@ -22,6 +23,9 @@ class PitchTemplate(Template):
 
     def as_string(self):
         return self._template_string
+
+    def render(self, *args, **kwargs):
+        return self._template.render(*args, **kwargs)
 
 
 class RecursiveTemplateRenderer(object):
