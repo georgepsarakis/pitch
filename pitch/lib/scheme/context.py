@@ -102,8 +102,8 @@ class SchemeStepContext(object):
         verify_plugins(requested_plugin_names)
 
     def get_request_parameters(self):
-        merged_request_parameters = self._preprocessed_scheme.get(
-            'requests', PitchDict()
+        merged_request_parameters = PitchDict(
+            self._preprocessed_scheme.get('requests', {})
         ) + self.processed_step.remove_keys(*self.STEP_KEYWORDS)
         return self.renderer(merged_request_parameters)
 
