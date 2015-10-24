@@ -14,6 +14,8 @@ $ git clone https://github.com/georgepsarakis/pitch.git
 $ pip install .
 ```
 
+> `pitch` can be used from the command-line as well as a library.
+
 ## Examples
 
 ### GitHub Public API
@@ -99,13 +101,14 @@ A `step` will be translated dynamically to one or more HTTP requests.
 The step definition also may include:
 
 - Conditional
-- Request parameters
 - Loops
+- Request parameters
 - List of Request/Response Plugins and their parameters
 
 ### Phases
 
-Each step execution is divided in two phases: `request` and `response` phase.
+A single step may generate multiple HTTP requests.
+Each sub-step execution is divided in two phases: `request` and `response` phase.
 
 ## Main Features
 
@@ -180,6 +183,8 @@ plugins, custom plugins can be written and loaded separately. See the
 
 <strong><sup>*</sup></strong> If no default value is specified, then the parameter is required.
 
+### Available Context Variables
+
 ### Rules
 
 - Parameters defined on `step` level will override the same parameter given
@@ -191,3 +196,119 @@ will be automatically resolved from the current context.
 - Plugins are given in a list, because some plugins may depend on others, so the execution sequence is important. Also, a plugin may be requested multiple times.
 - The plugin list must contain both request & response plugins. This was introduced for simplicity and less boilerplate syntax. At each phase, the appropriate subset of plugins will be selected and executed.
 
+## Using Plugins
+
+Plugins are divided in two major categories:
+
+- Request Plugins
+- Response Plugins
+
+The plugin list is specified at step-level. Each entry is a dictionary specifying the plugin name, while the remaining
+key-value pairs will be used for the plugin initialization.
+
+### Example
+
+A simple plugin case is the `request_delay` plugin; it adds a delay before sending the HTTP request.
+
+The implementation of this plugin is the following:
+
+```python
+# Module: pitch.plugins.common
+class DelayPlugin(BasePlugin):
+    # Notice the constructor argument
+    def __init__(self, seconds):
+        self._delay_seconds = float(seconds)
+
+    def execute(self, plugin_context):
+        time.sleep(self._delay_seconds)
+
+# Module: pitch.plugins.request
+class RequestDelayPlugin(DelayPlugin, BaseRequestPlugin):
+    _name = 'request_delay'
+```
+
+The scheme file instructions for calling the plugin are:
+
+```yaml
+steps:
+  - url: /example
+    plugins:
+      - plugin: request_delay
+        seconds: 1.0
+```
+
+## Developing Plugins
+
+New custom plugins can be developed by creating additional modules with subclasses of:
+
+- `pitch.plugins.request.BaseRequestPlugin`
+- `pitch.plugins.request.BaseResponsePlugin`
+
+### Example
+
+```python
+from pitch.plugins.request import BaseRequestPlugin
+from pitch.lib.common.utils import get_exported_plugins
+
+class TestRequestPlugin(BaseRequestPlugin):
+    _name = 'request_test'
+    def __init__(self, message):
+      self._message = message
+
+    def execute(self, plugin_context):
+        plugin_context.progress.info(
+          'Plugin {} says: {}'.format(self.name, self._message)
+        )
+
+exported_plugins = get_exported_plugins(BaseRequestPlugin)
+```
+
+Calling the above plugin from the step definition:
+
+```yaml
+steps:
+  - url: /example
+    plugins:
+      - plugin: request_test
+        message: 'hello world'
+        # The above will display during the
+        # execution in the progress logs:
+        # 'Plugin request_test says: hello world'
+```
+
+Available plugins and their parameters can be listed
+from the command-line by using the switch `--list-plugins`:
+
+```bash
+$ pitch --list-plugins
+# Or if additional plugin modules must be loaded:
+$ pitch --list-plugins --request-plugins-modules MODULE_NAME
+```
+
+### Core Plugins
+
+```
+Request
+=======
+add_header              |	 None|	 header,value
+file_input              |	 None|	 filename
+json_post_data          |	 None|
+pre_register            |	 None|
+profiler                |	 None|
+request_delay           |	 None|	 seconds
+request_logger          |	 None|	 logger_name,message
+
+Response
+========
+assert_http_status_code |	 None|	 expect
+json_file_output        |	 None|	 filename,create_dirs
+post_register           |	 None|
+profiler                |	 None|
+response_as_json        |	 None|
+response_logger         |	 None|	 logger_name,message
+stdout_writer           |	 None|
+```
+
+The first column is the plugin name, the second is the
+first line of the constructor docstring and the third is the
+list of the constructor argument names.
