@@ -33,6 +33,5 @@ steps:
             /questions/{{ item.question_id }}/answers?order=desc&sort=activity&site=stackoverflow
         with_items: questions_list
         plugins:
-            - plugin: stdout_writer
             - plugin: request_delay
               seconds: 1.0
