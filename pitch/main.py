@@ -27,12 +27,6 @@ def main():
         version=get_version()
     )
     arg_parser.add_argument(
-        '-S',
-        '--scheme',
-        help='Path of the scheme file to execute',
-        required=True
-    )
-    arg_parser.add_argument(
         '-P',
         '--processes',
         help='Number of processes',
@@ -49,11 +43,17 @@ def main():
         nargs='*',
         help='Additional response plugins (in Python import notation)'
     )
-    arg_parser.add_argument(
+    command_group = arg_parser.add_mutually_exclusive_group(required=True)
+    command_group.add_argument(
         '--list-plugins',
         action='store_true',
         default=False,
         help='Display available plugins and exit.'
+    )
+    command_group.add_argument(
+        '-S',
+        '--scheme',
+        help='Path of the scheme file to execute'
     )
     parameters = arg_parser.parse_args()
     bootstrap(**vars(parameters))
