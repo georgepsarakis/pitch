@@ -3,6 +3,7 @@ from copy import deepcopy
 import requests
 import six
 import yaml
+from yaml import SafeLoader
 from ..plugins.utils import execute_plugins
 from ..plugins.structures import PluginCollection
 from ..templating.structures import PitchTemplate, RecursiveTemplateRenderer
@@ -20,6 +21,13 @@ from ..logic.command import (
     CommandInvoker
 )
 from ..logic.control_flow import Loop, Conditional
+
+
+def construct_yaml_str(self, node):
+    # Override the default string handling function
+    # to always return unicode objects
+    return self.construct_scalar(node)
+SafeLoader.add_constructor(u'tag:yaml.org,2002:str', construct_yaml_str)
 
 
 class SchemeLoader(object):
