@@ -60,7 +60,7 @@ steps:
 		# `requests.Request` objects as parameters.
         # Here we specify GET parameters with `params`.
         params:
-            per_page: 3
+            per_page: 10
         # The list of request/response plugins
         # that should be executed.
         # If not specified the scheme-level default plugins
