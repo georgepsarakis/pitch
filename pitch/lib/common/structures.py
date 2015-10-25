@@ -93,17 +93,13 @@ class PitchDict(MutableMapping):
         return default
 
     def nested_get(self, key, default=None):
-        from ..templating.structures import PitchTemplate
-        expression = '''
-        {%% if %(key)s is defined %%}
-            {{ %(key)s|to_json }}
-        {%% else %%}
-            null
-        {%% endif %%}'''
-        template = PitchTemplate(expression % {'key': key})
-        if not template:
-            return default
-        return json.loads(template.render(**self))
+        from jinja2 import Environment
+        environment = Environment()
+        expression = environment.compile_expression(key)
+        result = expression(**self)
+        if result is None:
+            result = default
+        return result
 
     def inplace_transform(self, key, fn, *args, **kwargs):
         self[key] = fn(self[key], *args, **kwargs)
