@@ -30,6 +30,9 @@ class BasePlugin(object):
 
 
 class LoggerPlugin(BasePlugin):
+    """
+    Setup a logger, attach a file handler and log a message.
+    """
     _name = 'logger'
 
     def __init__(self, logger_name=None, message=None, **kwargs):
@@ -54,6 +57,7 @@ class LoggerPlugin(BasePlugin):
 
 
 class DelayPlugin(BasePlugin):
+    """ Pause execution for the specified delay interval. """
     def __init__(self, seconds):
         self._delay_seconds = float(seconds)
 
@@ -62,6 +66,7 @@ class DelayPlugin(BasePlugin):
 
 
 class UpdateContext(BasePlugin):
+    """ Add variables to the template context. """
     def __init__(self, **updates):
         self._updates = PitchDict(updates)
 

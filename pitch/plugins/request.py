@@ -14,18 +14,26 @@ class BaseRequestPlugin(BasePlugin):
 
 
 class RequestLoggerPlugin(LoggerPlugin, BaseRequestPlugin):
+    """
+    Setup a logger, attach a file handler and log a message.
+    """
     _name = 'request_logger'
 
 
 class RequestDelayPlugin(DelayPlugin, BaseRequestPlugin):
+    """ Pause execution for the specified delay interval. """
     _name = 'request_delay'
 
 
 class RequestUpdateContext(UpdateContext, BaseRequestPlugin):
+    """ Add variables to the request template context
+    """
     _name = 'pre_register'
 
 
 class FileInputPlugin(BaseRequestPlugin):
+    """ Read file from the local filesystem and store in the `result` property
+    """
     _name = 'file_input'
 
     def __init__(self, filename):
@@ -45,6 +53,8 @@ class FileInputPlugin(BaseRequestPlugin):
 
 
 class ProfilerPlugin(BaseRequestPlugin):
+    """ Keep track of the time required for the HTTP request & processing
+    """
     _name = 'profiler'
 
     def __init__(self):
@@ -57,6 +67,8 @@ class ProfilerPlugin(BaseRequestPlugin):
 
 
 class JSONPostDataPlugin(BaseRequestPlugin):
+    """ JSON-serialize the request data property (POST body)
+    """
     import json
     _name = 'json_post_data'
     _encoder = json.dumps
@@ -68,6 +80,8 @@ class JSONPostDataPlugin(BaseRequestPlugin):
 
 
 class AddHeaderPlugin(BaseRequestPlugin):
+    """ Add a request header
+    """
     _name = 'add_header'
 
     def __init__(self, header, value):

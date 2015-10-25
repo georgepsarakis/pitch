@@ -16,10 +16,15 @@ class BaseResponsePlugin(BasePlugin):
 
 
 class ResponseUpdateContext(UpdateContext, BaseResponsePlugin):
+    """ Add variables to the template context after the response has completed
+    """
     _name = 'post_register'
 
 
 class JSONResponsePlugin(BaseResponsePlugin):
+    """
+    Serialize the response body as JSON and store in response.as_json
+    """
     _name = 'response_as_json'
 
     def execute(self, plugin_context):
@@ -34,10 +39,16 @@ class JSONResponsePlugin(BaseResponsePlugin):
 
 
 class ResponseLoggerPlugin(LoggerPlugin, BaseResponsePlugin):
+    """
+    Setup a logger, attach a file handler and log a message.
+    """
     _name = 'response_logger'
 
 
 class JSONFileOutputPlugin(BaseResponsePlugin):
+    """
+    Write a JSON-serializable response to a file
+    """
     _name = 'json_file_output'
 
     def __init__(self, filename, create_dirs=True):
@@ -60,6 +71,8 @@ class JSONFileOutputPlugin(BaseResponsePlugin):
 
 
 class ProfilerPlugin(BaseResponsePlugin):
+    """ Keep track of the time required for the HTTP request & processing
+    """
     _name = 'profiler'
 
     def __init__(self):
@@ -86,6 +99,9 @@ class ProfilerPlugin(BaseResponsePlugin):
 
 
 class StdOutWriterPlugin(BaseResponsePlugin):
+    """
+    Print a JSON-serializable response to STDOUT
+    """
     _name = 'stdout_writer'
 
     def execute(self, plugin_context):
@@ -102,6 +118,8 @@ class StdOutWriterPlugin(BaseResponsePlugin):
 
 
 class AssertHttpStatusCode(BaseResponsePlugin):
+    """ Examine the response HTTP status code and raise error/stop execution
+    """
     _name = 'assert_http_status_code'
 
     def __init__(self, expect=requests.codes.ok):
