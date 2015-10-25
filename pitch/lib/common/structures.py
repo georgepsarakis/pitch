@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-import json
 from collections import MutableMapping, namedtuple
 import six
 from requests import Request
