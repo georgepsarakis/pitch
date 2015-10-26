@@ -12,5 +12,10 @@ script:
     - python -m unittest discover
     # Integration tests
     - ./run-public-api-tests.py   
+    # Check documentation
+    - cd ..
+    - cp README.md README.md.dist
+    - ./generate-documentation.py
+    - diff README.md README.md.dist
 
   
