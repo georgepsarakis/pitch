@@ -126,7 +126,10 @@ scheme_file_reference_defaults = [
 ]
 
 
-plugins_list = check_output(['pitch', '--list-plugins'])
+plugins_list = check_output(
+    ['pitch', '--list-plugins'],
+    universal_newlines=True
+)
 
 with open('README.md', 'w') as f:
     f.write(

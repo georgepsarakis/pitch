@@ -286,7 +286,6 @@ $ pitch --list-plugins --request-plugins-modules MODULE_NAME
 ### Core Plugins
 
 ```
-
 Request
 -------
 
@@ -334,6 +333,5 @@ Response
 
 - stdout_writer()
   * Print a JSON-serializable response to STDOUT
-
 ```
 
