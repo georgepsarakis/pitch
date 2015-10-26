@@ -2,6 +2,8 @@
 import re
 from subprocess import check_output
 from jinja2 import Template
+import six
+
 
 with open('doc/README.md.tmpl') as f:
     readme_template = Template(f.read())
@@ -129,7 +131,7 @@ plugins_list = check_output(['pitch', '--list-plugins'])
 with open('README.md', 'w') as f:
     f.write(
         readme_template.render(
-            plugins_list=plugins_list,
+            plugins_list=six.text_type(plugins_list),
             github_api_example=github_api_example,
             scheme_file_reference_desc=scheme_file_reference_desc,
             scheme_file_reference_defaults=scheme_file_reference_defaults
