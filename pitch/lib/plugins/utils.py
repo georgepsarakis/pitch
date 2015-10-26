@@ -44,12 +44,12 @@ def verify_plugins(given_plugins):
 
 def list_plugins():
     plugin_list = []
-    for phase, available_plugins in PLUGINS.iteritems():
+    for phase, available_plugins in six.iteritems(PLUGINS):
         title = phase.title()
         plugin_list.append((None, '\n{}'.format(title)))
         plugin_list.append((None, '-' * len(title)))
         phase_plugin_list = []
-        for name, plugin_class in available_plugins.iteritems():
+        for name, plugin_class in six.iteritems(available_plugins):
             constructor_signature = inspect.getargspec(plugin_class.__init__)
             plugin_args = constructor_signature.args
             plugin_args.remove('self')
