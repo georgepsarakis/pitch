@@ -44,7 +44,8 @@ def verify_plugins(given_plugins):
 
 def list_plugins():
     plugin_list = []
-    for phase, available_plugins in six.iteritems(PLUGINS):
+    for phase in sorted(PLUGINS.keys()):
+        available_plugins = PLUGINS[phase]
         title = phase.title()
         plugin_list.append((None, '\n{}'.format(title)))
         plugin_list.append((None, '-' * len(title)))
