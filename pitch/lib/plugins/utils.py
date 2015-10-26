@@ -46,22 +46,38 @@ def list_plugins():
     plugin_list = []
     for phase, available_plugins in PLUGINS.iteritems():
         title = phase.title()
-        plugin_list.append(('\n{}'.format(title),))
-        plugin_list.append(('=' * len(title),))
+        plugin_list.append((None, '\n{}'.format(title)))
+        plugin_list.append((None, '-' * len(title)))
         phase_plugin_list = []
         for name, plugin_class in available_plugins.iteritems():
-            plugin_args = inspect.getargspec(plugin_class.__init__).args
+            constructor_signature = inspect.getargspec(plugin_class.__init__)
+            plugin_args = constructor_signature.args
             plugin_args.remove('self')
+            if constructor_signature.defaults is not None:
+                defaults = constructor_signature.defaults
+                args_with_default = len(plugin_args) - len(defaults)
+                for index, argument in enumerate(plugin_args):
+                    if index >= args_with_default:
+                        plugin_args[index] = '{}={}'.format(
+                            argument,
+                            defaults[index - args_with_default]
+                        )
+            if constructor_signature.keywords is not None:
+                plugin_args.append(
+                    '**{}'.format(constructor_signature.keywords)
+                )
             docstring = re.sub(
                 r'\s+',
                 ' ',
-                six.text_type(plugin_class.__doc__).split("\n")[0]
+                six.text_type(plugin_class.__doc__).strip().split("\n")[0]
             )
             phase_plugin_list.append(
                 (
-                    '{:<24}'.format(name),
-                    docstring,
-                    ','.join(plugin_args)
+                    name,
+                    '\n- {}({})\n  * {}'.format(
+                        name, ', '.join(plugin_args),
+                        docstring
+                    )
                 )
             )
         plugin_list.extend(
@@ -70,14 +86,7 @@ def list_plugins():
     stop_execution(
         reporter=sys.stdout.write,
         message='{}\n'.format(
-            '\n'.join(
-                map(
-                    lambda plugin_info: '|\t '.join(
-                        map(six.text_type, plugin_info)
-                    ),
-                    plugin_list
-                )
-            )
+            '\n'.join(map(operator.itemgetter(1), plugin_list))
         ),
         exit_code=0
     )

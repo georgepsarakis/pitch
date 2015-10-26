@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import re
+from subprocess import check_output
 from jinja2 import Template
 
 with open('doc/README.md.tmpl') as f:
@@ -122,9 +123,13 @@ scheme_file_reference_defaults = [
     for detail in scheme_file_reference
 ]
 
+
+plugins_list = check_output(['pitch', '--list-plugins'])
+
 with open('README.md', 'w') as f:
     f.write(
         readme_template.render(
+            plugins_list=plugins_list,
             github_api_example=github_api_example,
             scheme_file_reference_desc=scheme_file_reference_desc,
             scheme_file_reference_defaults=scheme_file_reference_defaults

@@ -208,27 +208,7 @@ $ pitch --list-plugins --request-plugins-modules MODULE_NAME
 ### Core Plugins
 
 ```
-Request
-=======
-add_header              |	 None|	 header,value
-file_input              |	 None|	 filename
-json_post_data          |	 None|
-pre_register            |	 None|
-profiler                |	 None|
-request_delay           |	 None|	 seconds
-request_logger          |	 None|	 logger_name,message
-
-Response
-========
-assert_http_status_code |	 None|	 expect
-json_file_output        |	 None|	 filename,create_dirs
-post_register           |	 None|
-profiler                |	 None|
-response_as_json        |	 None|
-response_logger         |	 None|	 logger_name,message
-stdout_writer           |	 None|
+{{ plugins_list }}
 ```
 
-The first column is the plugin name, the second is the
-first line of the constructor docstring and the third is the
-list of the constructor argument names.
+

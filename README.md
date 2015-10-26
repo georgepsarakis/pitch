@@ -286,27 +286,54 @@ $ pitch --list-plugins --request-plugins-modules MODULE_NAME
 ### Core Plugins
 
 ```
+
 Request
-=======
-add_header              |	 None|	 header,value
-file_input              |	 None|	 filename
-json_post_data          |	 None|
-pre_register            |	 None|
-profiler                |	 None|
-request_delay           |	 None|	 seconds
-request_logger          |	 None|	 logger_name,message
+-------
+
+- add_header(header, value)
+  * Add a request header
+
+- file_input(filename)
+  * Read file from the local filesystem and store in the `result` property
+
+- json_post_data()
+  * JSON-serialize the request data property (POST body)
+
+- pre_register(**updates)
+  * Add variables to the request template context
+
+- profiler()
+  * Keep track of the time required for the HTTP request & processing
+
+- request_delay(seconds)
+  * Pause execution for the specified delay interval.
+
+- request_logger(logger_name=None, message=None, **kwargs)
+  * Setup a logger, attach a file handler and log a message.
 
 Response
-========
-assert_http_status_code |	 None|	 expect
-json_file_output        |	 None|	 filename,create_dirs
-post_register           |	 None|
-profiler                |	 None|
-response_as_json        |	 None|
-response_logger         |	 None|	 logger_name,message
-stdout_writer           |	 None|
+--------
+
+- assert_http_status_code(expect=200)
+  * Examine the response HTTP status code and raise error/stop execution
+
+- json_file_output(filename, create_dirs=True)
+  * Write a JSON-serializable response to a file
+
+- post_register(**updates)
+  * Add variables to the template context after the response has completed
+
+- profiler()
+  * Keep track of the time required for the HTTP request & processing
+
+- response_as_json()
+  * Serialize the response body as JSON and store in response.as_json
+
+- response_logger(logger_name=None, message=None, **kwargs)
+  * Setup a logger, attach a file handler and log a message.
+
+- stdout_writer()
+  * Print a JSON-serializable response to STDOUT
+
 ```
 
-The first column is the plugin name, the second is the
-first line of the constructor docstring and the third is the
-list of the constructor argument names.
