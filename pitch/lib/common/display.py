@@ -1,10 +1,18 @@
 from __future__ import unicode_literals
 from datetime import datetime
 import logging
-from .utils import error_logger, info_logger
+import six
+if six.PY2:
+    from types import NoneType
+else:
+    NoneType = type(None)
+from .utils import error_logger, info_logger, type_guard
+from .structures import InstanceInfo
 
 
 class ProgressLog(object):
+    """ Display progress notifications using standard library logging.
+    """
     LEVEL_COLOR_MAP = {
         logging.INFO: 1,
         logging.DEBUG: 34,
@@ -21,6 +29,7 @@ class ProgressLog(object):
         'yellow': 33
     }
 
+    @type_guard(instance=InstanceInfo)
     def __init__(self, instance):
         self.__instance = instance
 
@@ -31,6 +40,7 @@ class ProgressLog(object):
         else:
             return "\033[{}m{}\033[0m".format(color_code, text)
 
+    @type_guard(message=six.text_type, level=(int, NoneType), color=(int, NoneType))
     def _progress(self, message, level=None, color=None):
         if level is None:
             level = logging.INFO

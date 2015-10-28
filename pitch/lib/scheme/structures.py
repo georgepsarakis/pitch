@@ -186,12 +186,17 @@ class SchemeExecutor(object):
     def _send_request(self):
         step_context = self._step_context_proxy.get_context()
         step_context.progress.info(
-            message='[request] Sending request to URL: {}'.format(
+            message='[request] Sending HTTP request to URL: {}'.format(
                 step_context.request.url
             )
         )
         response = step_context.session.send(step_context.request)
         step_context.add(ContextParameter(name='response', value=response))
+        step_context.progress.info(
+            message='[response] Completed HTTP request to URL: {}'.format(
+                step_context.request.url
+            )
+        )
 
     def _process_response(self):
         step_context = self._step_context_proxy.get_context()

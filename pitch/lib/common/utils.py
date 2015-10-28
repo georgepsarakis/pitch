@@ -1,17 +1,19 @@
 from __future__ import unicode_literals
+from functools import wraps
+import inspect
 import re
 import sys
 import logging
 from logging import StreamHandler
 from pprint import PrettyPrinter
+import six
 
 # Regular Expressions
 RE_FIND_SCHEME = re.compile(r'http[s]*://')
-
+# Logging/Debugging
+debug = PrettyPrinter(indent=4).pformat
 error_logger = logging.getLogger('pitch.errors')
 info_logger = logging.getLogger('pitch.feedback')
-
-debug = PrettyPrinter(indent=4).pformat
 
 
 def setup_loggers():
@@ -69,6 +71,36 @@ def merge_dictionaries(a, b):
         else:
             r[k] = v
     return r
+
+
+def type_guard(**kwargs):
+    specification = kwargs
+
+    def outer_wrapper(f):
+        @wraps(f)
+        def inner_wrapper(*args, **inner_kwargs):
+            signature = inspect.getargspec(f)
+            kw_arguments = {}
+            if args:
+                kw_arguments = {
+                    signature.args[index]: value
+                    for index, value in enumerate(args)
+                }
+            kw_arguments.update(inner_kwargs)
+            for argument, arg_type in six.iteritems(specification):
+                if argument in kw_arguments:
+                    if not isinstance(inner_kwargs[argument], arg_type):
+                        raise TypeError(
+                            '{}->{}: Argument {} requires {} value'.format(
+                                f.__module__,
+                                f.__name__,
+                                argument,
+                                arg_type.__name__
+                            )
+                        )
+            return f(*args, **inner_kwargs)
+        return inner_wrapper
+    return outer_wrapper
 
 
 def get_exported_plugins(base_class):

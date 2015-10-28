@@ -4,10 +4,10 @@ import sys
 import requests
 from .common import BasePlugin, LoggerPlugin, UpdateContext
 from ..lib.common.utils import (
-    get_exported_plugins,
     stop_execution,
     to_iterable
 )
+from ..lib.common.utils import get_exported_plugins
 
 
 class BaseResponsePlugin(BasePlugin):
