@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from functools import wraps
+import operator
 import inspect
 import re
 import sys
@@ -91,11 +92,14 @@ def type_guard(**kwargs):
                 if argument in kw_arguments:
                     if not isinstance(inner_kwargs[argument], arg_type):
                         raise TypeError(
-                            '{}->{}: Argument {} requires {} value'.format(
+                            '{}->{}: Argument {} requires {}'.format(
                                 f.__module__,
                                 f.__name__,
                                 argument,
-                                arg_type.__name__
+                                map(
+                                    operator.attrgetter('__name__'),
+                                    to_iterable(arg_type)
+                                )
                             )
                         )
             return f(*args, **inner_kwargs)
