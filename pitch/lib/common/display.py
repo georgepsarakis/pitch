@@ -1,13 +1,9 @@
 from __future__ import unicode_literals
 from datetime import datetime
 import logging
-import six
-if six.PY2:
-    from types import NoneType
-else:
-    NoneType = type(None)
 from .utils import error_logger, info_logger, type_guard
 from .structures import InstanceInfo
+from .argtypes import t_int_none, t_string
 
 
 class ProgressLog(object):
@@ -40,7 +36,7 @@ class ProgressLog(object):
         else:
             return "\033[{}m{}\033[0m".format(color_code, text)
 
-    @type_guard(message=six.text_type, level=(int, NoneType), color=(int, NoneType))
+    @type_guard(message=t_string, level=t_int_none, color=t_int_none)
     def _progress(self, message, level=None, color=None):
         if level is None:
             level = logging.INFO

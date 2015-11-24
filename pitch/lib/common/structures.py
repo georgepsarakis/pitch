@@ -2,11 +2,18 @@ from __future__ import unicode_literals
 from collections import MutableMapping, namedtuple
 import six
 from requests import Request
-from .utils import to_iterable
-
+from .utils import to_iterable, type_guard
+from .argtypes import t_int
 
 class ReadOnlyContainer(object):
+    """
+    Base class for read-only property containers.
+    """
     def __init__(self, **fields):
+        """
+        Initialize the property container from the given field-value pairs.
+        :param fields: container field-value pairs as keyworded arguments.
+        """
         self._factory = namedtuple(
             typename='read_only_container',
             field_names=fields.keys()
@@ -18,7 +25,15 @@ class ReadOnlyContainer(object):
 
 
 class InstanceInfo(ReadOnlyContainer):
+    @type_guard(process_id=t_int, loop_id=t_int, threads=t_int)
     def __init__(self, process_id, loop_id, threads):
+        """
+        Instance information
+
+        :param process_id: Process identifier
+        :param loop_id: Current loop zero-based index
+        :param threads: Total number of available threads
+        """
         thread_id = loop_id % threads + 1
         loop_id += 1
         super(InstanceInfo, self).__init__(
