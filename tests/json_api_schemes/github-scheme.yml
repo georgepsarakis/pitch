@@ -23,12 +23,11 @@ steps:
               filename: "tmp/responses/json_output/github-users.json"
               create_dirs: true
             - plugin: post_register
-              user_list: response.as_json
+              user_list: response.json()
     -
-        url: >
-            /users/{{ item.login }}/repos
-        with_items: user_list
-        when: item.id >= 2 and item.id <= 5
+        url: '/users/{{ item.login }}/repos'
+        with_items: variables.user_list
+        when: 'item.id >= 2 and item.id <= 5'
         plugins:
             - plugin: response_as_json
             - plugin: assert_http_status_code

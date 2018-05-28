@@ -1,8 +1,5 @@
-from __future__ import unicode_literals
 import logging
 import time
-from ..lib.common.structures import PitchDict
-from ..lib.templating.structures import JinjaExpressionResolver
 
 
 class BasePlugin(object):
@@ -53,7 +50,9 @@ class LoggerPlugin(BasePlugin):
         self._message = message
 
     def execute(self, plugin_context):
-        self.logger.info(plugin_context.renderer(self._message))
+        self.logger.info(
+            plugin_context.step['rendering'].render(self._message)
+        )
 
 
 class DelayPlugin(BasePlugin):
@@ -68,9 +67,7 @@ class DelayPlugin(BasePlugin):
 class UpdateContext(BasePlugin):
     """ Add variables to the template context. """
     def __init__(self, **updates):
-        self._updates = PitchDict(updates)
+        self._updates = updates
 
     def execute(self, plugin_context):
-        interpreter = JinjaExpressionResolver(plugin_context)
-        for key, value in self._updates.iteritems():
-            plugin_context.renderer.context[key] = interpreter(value)
+        plugin_context.templating['variables'].update(self._updates)

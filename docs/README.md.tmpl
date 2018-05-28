@@ -20,7 +20,7 @@ $ pip install .
 
 ### GitHub Public API
 
-The following scheme file will:
+The following Sequence file will:
 
 - Fetch the details of the first 10 users
 - Fetch the repositories for users with id in the range [2,4]
@@ -31,7 +31,7 @@ The following scheme file will:
 
 ## Concepts
 
-### Scheme Files
+### Sequence Files
 
 Instructions files containing a list of `steps` which will dynamically generate
 a series of HTTP requests.
@@ -56,7 +56,7 @@ Each sub-step execution is divided in two phases: `request` and `response` phase
 
 ### Session
 
-Each scheme execution runs using the same
+Each Sequence execution runs using the same
 [requests.Session](http://docs.python-requests.org/en/latest/user/advanced/#session-objects).
 This means that each request is not necessarily isolated but can be part of
 a common browser HTTP flow.
@@ -73,7 +73,7 @@ simplicity.
 ### Templating
 
 As already discussed in [Concepts](#concepts), `pitch` reads instructions from
-`scheme` files. `Jinja2` template expressions can be widely used to allow
+`Sequence` files. `Jinja2` template expressions can be widely used to allow
 dynamic context during execution.
 
 ### Plugins
@@ -81,14 +81,13 @@ dynamic context during execution.
 Additional functionality or pre/post-processing operations on
 `Request`/`Response` objects with the use of plugins. Apart from the core
 plugins, custom plugins can be written and loaded separately. See the
-[Plugin Development Reference]
-(#developing-plugins).
+[Plugin Development Reference](#developing-plugins).
 
-## Scheme File Reference
+## Sequence File Reference
 
 | Parameter | Definition | Type | Description |
 | --------- |----------- | ---- | ----------- |
-{% for parameter_details in scheme_file_reference_desc -%}
+{% for parameter_details in sequence_file_reference_desc -%}
 |{{ parameter_details|join('|') }}|
 {% endfor %}
 
@@ -96,7 +95,7 @@ plugins, custom plugins can be written and loaded separately. See the
 
 | Parameter | Default<sup>*</sup> |
 | --------- | ------------------- |
-{% for parameter_details in scheme_file_reference_defaults -%}
+{% for parameter_details in sequence_file_reference_defaults -%}
 |{{ parameter_details|join('|') }}|
 {% endfor %}
 
@@ -108,7 +107,7 @@ plugins, custom plugins can be written and loaded separately. See the
 ### Rules
 
 - Parameters defined on `step` level will override the same parameter given
-  on `scheme` level.
+  on `Sequence` level.
 - [Jinja2 template braces](http://jinja.pocoo.org/docs/dev/templates/#variables)
 can be omitted in `when` command expressions, as they
 will be automatically resolved from the current context.
@@ -147,7 +146,7 @@ class RequestDelayPlugin(DelayPlugin, BaseRequestPlugin):
     _name = 'request_delay'
 ```
 
-The scheme file instructions for calling the plugin are:
+The Sequence file instructions for calling the plugin are:
 
 ```yaml
 steps:

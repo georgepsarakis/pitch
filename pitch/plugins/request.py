@@ -1,11 +1,11 @@
-from __future__ import unicode_literals
-from .common import (
+import os
+from pitch.plugins.common import (
     BasePlugin,
     LoggerPlugin,
     DelayPlugin,
     UpdateContext
 )
-from ..lib.common.utils import get_exported_plugins
+from pitch.common.utils import get_exported_plugins
 
 
 class BaseRequestPlugin(BasePlugin):
@@ -37,7 +37,6 @@ class FileInputPlugin(BaseRequestPlugin):
     _name = 'file_input'
 
     def __init__(self, filename):
-        import os
         self._filename = os.path.expanduser(os.path.abspath(filename))
         self._directory = os.path.dirname(filename)
         if not os.path.isfile(self._filename):

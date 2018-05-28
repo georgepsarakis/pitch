@@ -47,3 +47,4 @@ tmp/*
 # virtualenv
 env3.4/*
 env2.7/*
+.python-version

@@ -1,7 +1,6 @@
 language: python
 python:
-    - "2.7"
-    - "3.4"
+    - "3.6"
 install:
     - pip install .
     - pip install flake8 nose coverage
@@ -13,9 +12,8 @@ script:
     # Integration tests
     - ./run-public-api-tests.py   
     # Check documentation
-    - cd ..
-    - cp README.md README.md.dist
-    - ./generate-documentation.py
-    - diff README.md README.md.dist
+#    - cd ..
+#    - cp README.md README.md.dist
+#    - ./generate-documentation.py
+#    - diff README.md README.md.dist
 
-  

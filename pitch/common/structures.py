@@ -1,9 +1,8 @@
-from __future__ import unicode_literals
+from argparse import Namespace
 from collections import MutableMapping, namedtuple
-import six
+
 from requests import Request
-from .utils import to_iterable, type_guard
-from .argtypes import t_int
+
 
 class ReadOnlyContainer(object):
     """
@@ -25,8 +24,7 @@ class ReadOnlyContainer(object):
 
 
 class InstanceInfo(ReadOnlyContainer):
-    @type_guard(process_id=t_int, loop_id=t_int, threads=t_int)
-    def __init__(self, process_id, loop_id, threads):
+    def __init__(self, process_id: int, loop_id: int, threads: int):
         """
         Instance information
 
@@ -43,6 +41,8 @@ class InstanceInfo(ReadOnlyContainer):
         )
 
 
+# TODO: inherit from CaseInsensitiveDict
+# TODO: consider removal
 class PitchDict(MutableMapping):
     def __init__(self, *args, **kwargs):
         self._dict = dict(*args, **kwargs)
@@ -74,9 +74,6 @@ class PitchDict(MutableMapping):
     def __repr__(self):
         return 'PitchDict({})'.format(self._dict.items())
 
-    def iteritems(self):
-        return six.iteritems(self._dict)
-
     def copy(self):
         return self.__class__(self)
 
@@ -89,37 +86,38 @@ class PitchDict(MutableMapping):
                 pass
         return dictionary_copy
 
-    def get_any_item_by_key(self, *keys, **kwargs):
+    def get_any(self, *keys):
         for key in keys:
             try:
                 return key, self[key]
             except KeyError:
                 pass
-        return None, kwargs.get('default')
 
-    def get_first_from_multiple(self, key, other, default=None):
-        other = to_iterable(other)
+    def find_first(self, key: str, others: list, default: object):
         if key in self:
             return self[key]
-        for other_dict in other:
-            if key in other_dict:
-                return other_dict[key]
+
+        for other in others:
+            if key in other:
+                return other[key]
+
         return default
 
-    def nested_get(self, key, default=None):
-        from jinja2 import Environment
-        environment = Environment()
-        expression = environment.compile_expression(key)
-        result = expression(**self)
-        if result is None:
-            result = default
-        return result
-
-    def inplace_transform(self, key, fn, *args, **kwargs):
+    def set_transform(self, key, fn, *args, **kwargs):
         self[key] = fn(self[key], *args, **kwargs)
 
 
 class PitchRequest(Request):
+    def __init__(self, *args, **kwargs):
+        super(PitchRequest, self).__init__(*args, **kwargs)
+        self.__pitch_properties = Namespace()
+
+    @property
+    def pitch_properties(self):
+        return self.__pitch_properties
+
     def update(self, **kwargs):
-        for property_name, value in six.iteritems(kwargs):
-            setattr(self, property_name, value)
+        for property_name, value in kwargs.items():
+            setattr(self.__pitch_properties, property_name, value)
+            if hasattr(self, property_name):
+                setattr(self, property_name, value)

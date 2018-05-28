@@ -16,7 +16,7 @@ steps:
               filename: "tmp/responses/json_output/stack-overflow-info.json"
               create_dirs: true
             - plugin: response_logger
-              message: "Total comments: {{ response.as_json['items'].0.total_comments }}"
+              message: "Total comments: {{ response.json()['items'].0.total_comments }}"
               handler:
                 filename: tmp/se-testing.log
             - plugin: request_delay
@@ -27,11 +27,10 @@ steps:
             - plugin: request_delay
               seconds: 1.0
             - plugin: post_register
-              questions_list: response.as_json['items']
+              questions_list: response.json()['items']
     - 
-        url: >
-            /questions/{{ item.question_id }}/answers?order=desc&sort=activity&site=stackoverflow
-        with_items: questions_list
+        url: "/questions/{{ item.question_id }}/answers?order=desc&sort=activity&site=stackoverflow"
+        with_items: variables.questions_list
         plugins:
             - plugin: request_delay
               seconds: 1.0

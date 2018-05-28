@@ -1,13 +1,15 @@
-from __future__ import unicode_literals
 import json
+import os
+import logging
 import sys
+import time
+
 import requests
-from .common import BasePlugin, LoggerPlugin, UpdateContext
-from ..lib.common.utils import (
-    stop_execution,
-    to_iterable
-)
-from ..lib.common.utils import get_exported_plugins
+
+from pitch.plugins.common import BasePlugin, LoggerPlugin, UpdateContext
+from pitch.common.utils import to_iterable, get_exported_plugins
+
+logger = logging.getLogger()
 
 
 class BaseResponsePlugin(BasePlugin):
@@ -28,11 +30,10 @@ class JSONResponsePlugin(BaseResponsePlugin):
     _name = 'response_as_json'
 
     def execute(self, plugin_context):
-        plugin_context.response.as_json = None
+        response = plugin_context.templating['response']
+        response.as_json = None
         try:
-            plugin_context.response.as_json = json.loads(
-                plugin_context.response.text
-            )
+            response.as_json = json.loads(response.text)
             self._result = (True, None)
         except ValueError as e:
             self._result = (False, e)
@@ -52,7 +53,7 @@ class JSONFileOutputPlugin(BaseResponsePlugin):
     _name = 'json_file_output'
 
     def __init__(self, filename, create_dirs=True):
-        import os
+
         self._filename = os.path.expanduser(os.path.abspath(filename))
         self._directory = os.path.dirname(filename)
         if not os.path.exists(self._directory):
@@ -64,10 +65,11 @@ class JSONFileOutputPlugin(BaseResponsePlugin):
                         self._directory
                     )
                 )
+        super(JSONFileOutputPlugin, self).__init__()
 
     def execute(self, plugin_context):
         with open(self._filename, 'w') as f:
-            json.dump(plugin_context.response.as_json, f)
+            json.dump(plugin_context.templating['response'].json(), f)
 
 
 class ProfilerPlugin(BaseResponsePlugin):
@@ -76,9 +78,9 @@ class ProfilerPlugin(BaseResponsePlugin):
     _name = 'profiler'
 
     def __init__(self):
-        import time
         self._end_time = time.clock()
         self._elapsed_time = self._end_time
+        super(ProfilerPlugin, self).__init__()
 
     def execute(self, plugin_context):
         request_profiler_plugin = plugin_context.request.plugins.get(
@@ -123,32 +125,36 @@ class AssertHttpStatusCode(BaseResponsePlugin):
     _name = 'assert_http_status_code'
 
     def __init__(self, expect=requests.codes.ok):
-        self.__expect = map(int, to_iterable(expect))
+        self.__expect = [int(code) for code in to_iterable(expect)]
+        super(AssertHttpStatusCode, self).__init__()
 
     def execute(self, plugin_context):
-        response = plugin_context.response
-        failfast = plugin_context.processed_step.get_first_from_multiple(
-            key='failfast',
-            other=plugin_context.scheme,
-            default=True
+        response = plugin_context.templating['response']
+        failfast = plugin_context.step.get(
+            'failfast',
+            plugin_context.globals['failfast']
         )
         if response.status_code not in self.__expect:
-            message = 'Expected HTTP status code {}, received {}'.format(
+            message = 'Expected HTTP status code {}, received {} - ' \
+                      'Reason={} - URL = {}'
+            message = message.format(
                 self.__expect,
-                response.status_code
+                response.status_code,
+                response.text,
+                response.request.url
             )
             if failfast:
-                stop_execution(plugin_context.progress.error, message)
+                raise SystemExit(message)
         if response.status_code < requests.codes.bad_request:
-            reporter = plugin_context.progress.success
+            reporter = logger.info
         else:
-            reporter = plugin_context.progress.error
+            reporter = logger.error
         reporter(
-            message='[response] Received response (HTTP code={}) from '
-                    'URL: {}'.format(
-                        response.status_code,
-                        response.url
-                    )
+            '[response] Received response (HTTP code={}) from '
+            'URL: {}'.format(
+                response.status_code,
+                response.url
+            )
         )
         if response.status_code >= requests.codes.bad_request:
             if failfast:

@@ -6,9 +6,9 @@ import os
 from copy import deepcopy
 from jinja2 import Template
 import yaml
-from pitch.lib.common.structures import InstanceInfo, ReadOnlyContainer
+from pitch.common.structures import InstanceInfo, ReadOnlyContainer
 from pitch.lib.scheme.structures import SchemeLoader, PitchDict
-from pitch.lib.templating.structures import (
+from pitch.templating import (
     PitchTemplate,
     RecursiveTemplateRenderer,
     JinjaExpressionResolver
@@ -53,9 +53,9 @@ class TestSchemeStepContext(unittest.TestCase):
         self.scheme_step_context = SchemeStepContext(
             preprocessed_scheme=PitchDict(self.scheme)
         )
-        self.scheme_step_context.template_context = PitchDict()
+        self.scheme_step_context._template_context = PitchDict()
         self.renderer = RecursiveTemplateRenderer(
-            self.scheme_step_context.template_context
+            self.scheme_step_context._template_context
         )
 
     def test_add(self):
@@ -66,14 +66,14 @@ class TestSchemeStepContext(unittest.TestCase):
             hasattr(self.scheme_step_context, 'prop1')
         )
         self.assertEqual(self.scheme_step_context.prop1, 1)
-        self.assertIn('prop1', self.scheme_step_context.template_context)
+        self.assertIn('prop1', self.scheme_step_context._template_context)
 
     def test_contains(self):
         self.scheme_step_context.add(ContextParameter('prop1', 1))
         self.assertIn('prop1', self.scheme_step_context)
 
     def test_get_request_parameters(self):
-        from pitch.lib.common.utils import identity
+        from pitch.common import identity
         step = PitchDict(self.scheme['steps'][0])
         self.scheme_step_context.processed_step = PitchDict(step)
         self.scheme_step_context.renderer = identity
@@ -88,7 +88,7 @@ class TestSchemeStepContext(unittest.TestCase):
         )
 
     def test_change_phase(self):
-        from pitch.lib.plugins.utils import InvalidPluginPhaseError
+        from pitch.exceptions import InvalidPluginPhaseError
         with self.assertRaises(InvalidPluginPhaseError):
             self.scheme_step_context.set_phase('test')
         for phase in ['request', 'response']:
@@ -167,7 +167,7 @@ class TestPitchDict(unittest.TestCase):
             'z': 11
         }
         other_dict2 = {'y': 12}
-        fn = self.pitch_dict.get_first_from_multiple
+        fn = self.pitch_dict.find_first
         self.assertEqual(fn('x', other_dict), 10)
         self.assertEqual(fn('y', (other_dict, other_dict2)), 12)
         self.assertEqual(fn('a', other_dict), 1)
@@ -195,13 +195,13 @@ class TestPitchDict(unittest.TestCase):
         self.assertEqual(self.pitch_dict.nested_get('b.3'), 3)
 
     def test_inplace_transform(self):
-        self.pitch_dict.inplace_transform('b', sum)
+        self.pitch_dict.set_transform('b', sum)
         self.assertEqual(self.pitch_dict['b'], 45)
         self.pitch_dict['e'] = 2
-        self.pitch_dict.inplace_transform('e', math.pow, 3)
+        self.pitch_dict.set_transform('e', math.pow, 3)
         self.assertEqual(self.pitch_dict['e'], 8)
         with self.assertRaises(KeyError):
-            self.pitch_dict.inplace_transform('x', lambda x: x)
+            self.pitch_dict.set_transform('x', lambda x: x)
 
     def test_add(self):
         pitch_dict_2 = PitchDict([('a', 2), ('e', 100)])
