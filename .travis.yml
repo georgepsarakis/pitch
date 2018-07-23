@@ -10,7 +10,7 @@ script:
     # Unit Tests & Coverage
     - nosetests -v --with-coverage --cover-package=pitch
     # Integration tests
-    - ./run-public-api-tests.py   
+    - ./.ci/run-integration-tests.sh
     # Check documentation
 #    - cd ..
 #    - cp README.md README.md.dist
