@@ -1,42 +1,56 @@
-from __future__ import unicode_literals
-from copy import copy
-from collections import MutableSequence
+from pitch.plugins.common import BasePlugin
 
 
-class PitchPluginCollection(MutableSequence):
-    def __init__(self, plugin_list=None):
-        if plugin_list is None:
-            self._plugins = []
+class Registry(object):
+    def __init__(self):
+        self._request = {}
+        self._response = {}
+
+    def add_subclasses(self, base_plugin_class):
+        return [self.add(cls) for cls in base_plugin_class.__subclasses__()]
+
+    @property
+    def request_plugins(self):
+        return self._request
+
+    @property
+    def response_plugins(self):
+        return self._response
+
+    @property
+    def phases(self) -> tuple:
+        return 'request', 'response'
+
+    def all(self):
+        return {
+            'request': self.request_plugins,
+            'response': self.response_plugins
+        }
+
+    def by_phase(self, name):
+        if name == 'request':
+            return self.request_plugins
+        elif name == 'response':
+            return self.response_plugins
         else:
-            self._plugins = copy(plugin_list)
+            raise NameError(name)
 
-    def __getitem__(self, index):
-        return self._plugins[index]
+    def exists(self, cls):
+        name = cls.get_name()
+        phase = cls.get_phase()
+        return self.by_phase(phase).get(name) is not None
 
-    def __setitem__(self, index, value):
-        self._plugins[index] = value
+    def add(self, cls):
+        name = cls.get_name()
+        phase = cls.get_phase()
+        self.by_phase(phase)[name] = cls
+        return cls
 
-    def __delitem__(self, index):
-        del self._plugins[index]
 
-    def __len__(self):
-        return self._plugins.__len__()
+def register(cls: BasePlugin):
+    if not registry.exists(cls):
+        registry.add(cls)
+    return cls
 
-    def get(self, name):
-        return_plugin = None
-        for plugin in self._plugins:
-            if name == plugin['plugin']:
-                return_plugin = plugin
-        return return_plugin
 
-    def get_list(self, name):
-        return_plugins = None
-        for plugin in self._plugins:
-            if name == plugin['plugin']:
-                if return_plugins is None:
-                    return_plugins = []
-                return_plugins.append(plugin)
-        return return_plugins
-
-    def insert(self, index, value):
-        self._plugins.insert(index, value)
+registry = Registry()

@@ -7,14 +7,13 @@ import time
 import requests
 
 from pitch.plugins.common import BasePlugin, LoggerPlugin, UpdateContext
-from pitch.common.utils import to_iterable, get_exported_plugins
+from pitch.common.utils import to_iterable
 
 logger = logging.getLogger()
 
 
 class BaseResponsePlugin(BasePlugin):
-    def __init__(self):
-        self._phase = 'response'
+    _phase = 'response'
 
 
 class ResponseUpdateContext(UpdateContext, BaseResponsePlugin):
@@ -159,6 +158,3 @@ class AssertHttpStatusCode(BaseResponsePlugin):
         if response.status_code >= requests.codes.bad_request:
             if failfast:
                 response.raise_for_status()
-
-
-exported_plugins = get_exported_plugins(BaseResponsePlugin)

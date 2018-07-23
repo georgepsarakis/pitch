@@ -13,7 +13,7 @@ setup(
         'click==6.7',
         'colorama==0.3.9',
         'jinja2==2.10',
-        'marshmallow==2.15.3'
+        'marshmallow==2.15.3',
         'requests==2.18.4',
         'structlog==18.1.0'
     ],

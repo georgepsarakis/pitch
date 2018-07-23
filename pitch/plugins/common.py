@@ -3,15 +3,12 @@ import time
 
 
 class BasePlugin(object):
+    _phase = None
     _name = None
     _result = None
 
     @property
     def name(self):
-        return self._name
-
-    @property
-    def phase(self):
         return self._name
 
     @property
@@ -21,6 +18,10 @@ class BasePlugin(object):
     @classmethod
     def get_name(cls):
         return cls._name
+
+    @classmethod
+    def get_phase(cls):
+        return cls._phase
 
     def execute(self, plugin_context):
         pass

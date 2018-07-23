@@ -5,12 +5,10 @@ from pitch.plugins.common import (
     DelayPlugin,
     UpdateContext
 )
-from pitch.common.utils import get_exported_plugins
 
 
 class BaseRequestPlugin(BasePlugin):
-    def __init__(self):
-        self._phase = 'request'
+    _phase = 'request'
 
 
 class RequestLoggerPlugin(LoggerPlugin, BaseRequestPlugin):
@@ -89,6 +87,3 @@ class AddHeaderPlugin(BaseRequestPlugin):
 
     def execute(self, plugin_context):
         plugin_context.request.headers[self._header] = self._value
-
-
-exported_plugins = get_exported_plugins(BaseRequestPlugin)

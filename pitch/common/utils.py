@@ -30,10 +30,3 @@ def merge_dictionaries(a, b):
         else:
             r[k] = v
     return r
-
-
-def get_exported_plugins(base_class):
-    return {
-        cls.get_name(): cls
-        for cls in base_class.__subclasses__()
-    }

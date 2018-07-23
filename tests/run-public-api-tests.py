@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from __future__ import unicode_literals, print_function
 import subprocess
 import sys
+
 
 if __name__ == "__main__":
     api_names = [

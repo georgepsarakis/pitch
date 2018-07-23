@@ -1,7 +1,7 @@
-from argparse import Namespace
-from collections import MutableMapping, namedtuple
+from collections import namedtuple
 
-from requests import Request
+from requests.structures import CaseInsensitiveDict
+from boltons.typeutils import make_sentinel
 
 
 class ReadOnlyContainer(object):
@@ -41,26 +41,8 @@ class InstanceInfo(ReadOnlyContainer):
         )
 
 
-# TODO: inherit from CaseInsensitiveDict
-# TODO: consider removal
-class PitchDict(MutableMapping):
-    def __init__(self, *args, **kwargs):
-        self._dict = dict(*args, **kwargs)
-
-    def __getitem__(self, item):
-        return self._dict.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        self._dict.__setitem__(key, value)
-
-    def __delitem__(self, key):
-        del self._dict[key]
-
-    def __len__(self):
-        return self._dict.__len__()
-
-    def __iter__(self):
-        return self._dict.__iter__()
+class HierarchicalDict(CaseInsensitiveDict):
+    _MISSING = make_sentinel()
 
     def __add__(self, other):
         new = self.copy()
@@ -72,12 +54,12 @@ class PitchDict(MutableMapping):
         return self
 
     def __repr__(self):
-        return 'PitchDict({})'.format(self._dict.items())
+        return '{}({})'.format(
+            self.__class__.__name__,
+            self.items()
+        )
 
-    def copy(self):
-        return self.__class__(self)
-
-    def remove_keys(self, *keys):
+    def remove(self, *keys):
         dictionary_copy = self.copy()
         for key in keys:
             try:
@@ -93,7 +75,7 @@ class PitchDict(MutableMapping):
             except KeyError:
                 pass
 
-    def find_first(self, key: str, others: list, default: object):
+    def find_first(self, key: str, others: list, default: object=_MISSING):
         if key in self:
             return self[key]
 
@@ -102,22 +84,3 @@ class PitchDict(MutableMapping):
                 return other[key]
 
         return default
-
-    def set_transform(self, key, fn, *args, **kwargs):
-        self[key] = fn(self[key], *args, **kwargs)
-
-
-class PitchRequest(Request):
-    def __init__(self, *args, **kwargs):
-        super(PitchRequest, self).__init__(*args, **kwargs)
-        self.__pitch_properties = Namespace()
-
-    @property
-    def pitch_properties(self):
-        return self.__pitch_properties
-
-    def update(self, **kwargs):
-        for property_name, value in kwargs.items():
-            setattr(self.__pitch_properties, property_name, value)
-            if hasattr(self, property_name):
-                setattr(self, property_name, value)

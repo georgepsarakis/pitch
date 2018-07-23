@@ -6,36 +6,44 @@ import logging
 import re
 
 from pitch.exceptions import InvalidPluginPhaseError, UnknownPluginError
-from pitch.plugins import PLUGINS, VALID_PHASES
-from pitch.common.structures import PitchDict
+from pitch.plugins.structures import registry
+from pitch.plugins.request import BaseRequestPlugin
+from pitch.plugins.response import BaseResponsePlugin
 
 logger = logging.getLogger(__name__)
+
+
+def loader(request_plugins_modules=None, response_plugins_modules=None):
+    if request_plugins_modules is not None:
+        for module_path in request_plugins_modules:
+            _import_plugins(module_path)
+
+    if response_plugins_modules is not None:
+        for module_path in response_plugins_modules:
+            _import_plugins(module_path)
+
+    return {
+        'request': registry.add_subclasses(BaseRequestPlugin),
+        'response': registry.add_subclasses(BaseResponsePlugin)
+    }
 
 
 def _import_plugins(from_path):
     return importlib.import_module(
         from_path.replace('.', '_'),
         from_path
-    ).exported_plugins
-
-
-def loader(request_plugins_modules=None, response_plugins_modules=None):
-    if request_plugins_modules is not None:
-        for module_path in request_plugins_modules:
-            PLUGINS['request'].update(_import_plugins(module_path))
-
-    if response_plugins_modules is not None:
-        for module_path in response_plugins_modules:
-            PLUGINS['response'].update(_import_plugins(module_path))
+    )
 
 
 def verify_plugins(given_plugins):
-    registered_plugin_names = set(
-        itertools.chain.from_iterable([
-            phase_plugins.keys()
-            for phase_plugins in PLUGINS.values()
-        ])
-    )
+    registered_plugin_names = set()
+    for phase in registry.phases:
+        registered_plugin_names.union(set(
+            itertools.chain.from_iterable([
+                phase_plugins.keys()
+                for phase_plugins in registry.by_phase(phase).values()
+            ])
+        ))
 
     requested_plugin_names = set(given_plugins)
     if not requested_plugin_names.issubset(registered_plugin_names):
@@ -48,8 +56,7 @@ def verify_plugins(given_plugins):
 
 def list_plugins():
     plugins = {}
-    for phase in sorted(PLUGINS.keys()):
-        available_plugins = PLUGINS[phase]
+    for phase, available_plugins in sorted(registry.all().items()):
         phase_plugins = plugins.setdefault(phase, {})
 
         for name, plugin_class in available_plugins.items():
@@ -87,19 +94,16 @@ def list_plugins():
 
 def execute_plugins(context):
     step_plugins = context.step['definition'].get('plugins')
-    phase_plugins = PLUGINS[context.step['phase']]
+    phase_plugins = registry.by_phase(context.step['phase'])
     step_phase_plugins = filter(
         lambda plugin_details:
         plugin_details.get('plugin')
         in phase_plugins,
         step_plugins
     )
-    if context.step['phase'] in VALID_PHASES:
-        phase_object = context.templating[context.step['phase']]
-    else:
-        raise InvalidPluginPhaseError(
-            'Invalid Phase: {}'.format(context.step['phase'])
-        )
+    _valid_phase_or_raise(context.step['phase'])
+
+    phase_object = context.templating[context.step['phase']]
 
     phase_object.plugins = []
     for plugin_execution_args in step_phase_plugins:
@@ -111,6 +115,11 @@ def execute_plugins(context):
         )
 
 
+def _valid_phase_or_raise(name):
+    if name not in registry.phases:
+        raise InvalidPluginPhaseError('Invalid Phase: {}'.format(name))
+
+
 def _execute_plugin(context, plugin_args):
     phase = context.step['phase']
     renderer = context.step['rendering'].render_nested
@@ -118,20 +127,20 @@ def _execute_plugin(context, plugin_args):
         deepcopy(plugin_args)
     )
     plugin_name = renderer(plugin_execution_args['plugin'])
-    current_plugin_display_info = "[{}.plugins.{}]".format(
+    current_plugin_display_info = "plugin={}.plugins.{}".format(
         phase,
         plugin_name
     )
-    plugin_instance = PLUGINS[phase][plugin_name](
+    plugin_instance = registry.by_phase(phase)[plugin_name](
         **{key: value
            for key, value in plugin_execution_args.items()
            if key != 'plugin'}
     )
     logger.info(
-        "{} Executing ...".format(current_plugin_display_info)
+        "{} status={}".format(current_plugin_display_info, 'running')
     )
     plugin_instance.execute(context)
     logger.info(
-        "{} Done".format(current_plugin_display_info)
+        "{} status={}".format(current_plugin_display_info, 'done')
     )
-    return PitchDict({'plugin': plugin_name, 'instance': plugin_instance})
+    return {'plugin': plugin_name, 'instance': plugin_instance}

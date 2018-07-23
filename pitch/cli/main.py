@@ -1,7 +1,7 @@
 import click
 
 from pitch.runner.bootstrap import bootstrap
-from pitch.plugins.utils import list_plugins
+from pitch.plugins.utils import list_plugins, loader
 from pitch.cli.logger import logger
 
 
@@ -15,10 +15,10 @@ def cli():
 @click.option('-P', '--processes', type=int,
               help='Number of processes', default=1)
 @click.option('-R', '--request-plugins',
-              nargs=0,
+              multiple=True,
               help='Additional request plugins (in Python import notation)')
 @click.option('-S', '--response-plugins',
-              nargs=0,
+              multiple=True,
               help='Additional response plugins (in Python import notation)')
 @click.argument('sequence_file',
                 type=click.Path(exists=True, dir_okay=False, readable=True))
@@ -39,7 +39,14 @@ def plugins():
 
 
 @plugins.command(name='list', help='Display available plugins and exit.')
-def list_():
+@click.option('-R', '--request-plugins',
+              multiple=True,
+              help='Additional request plugins (in Python import notation)')
+@click.option('-S', '--response-plugins',
+              multiple=True,
+              help='Additional response plugins (in Python import notation)')
+def list_(request_plugins, response_plugins):
+    loader(request_plugins, response_plugins)
     for plugin_type, phase_plugins in list_plugins().items():
         click.echo()
         click.secho(plugin_type.upper(), bold=True)
