@@ -1,7 +1,7 @@
 import itertools
 
 import yaml
-from boltons.iterutils import is_collection
+
 from boltons.typeutils import get_all_subclasses
 
 

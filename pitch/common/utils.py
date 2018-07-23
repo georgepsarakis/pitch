@@ -24,7 +24,7 @@ def to_iterable(obj):
 
 def merge_dictionaries(a, b):
     r = a.copy()
-    for k, v in b.iteritems():
+    for k, v in b.items():
         if k in r and isinstance(r[k], dict):
             r[k] = merge_dictionaries(r[k], v)
         else:

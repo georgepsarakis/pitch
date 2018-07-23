@@ -29,7 +29,10 @@ class SequenceLoader(object):
 
 
 class SequenceExecutor(object):
-    def __init__(self, sequence_loader: SequenceLoader, logger: logging.Logger):
+    def __init__(
+            self,
+            sequence_loader: SequenceLoader,
+            logger: logging.Logger):
         self._sequence_loader = sequence_loader
         self._context = self._initialize_context()
         self._context_proxy = ContextProxy(self._context)

@@ -6,9 +6,8 @@ install:
     - pip install flake8 nose coverage
 script:
     - flake8 -v pitch tests
-    - cd tests
     # Unit Tests & Coverage
-    - nosetests -v --with-coverage --cover-package=pitch
+    - nosetests -v --with-coverage --cover-package=pitch tests/
     # Integration tests
     - ./.ci/run-integration-tests.sh
     # Check documentation

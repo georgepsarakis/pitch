@@ -1,6 +1,4 @@
-import yaml #  flake8: noqa
-
-from yaml import SafeLoader
+import yaml
 
 
 def construct_yaml_str(self, node):
@@ -9,4 +7,4 @@ def construct_yaml_str(self, node):
     return self.construct_scalar(node)
 
 
-SafeLoader.add_constructor(u'tag:yaml.org,2002:str', construct_yaml_str)
+yaml.SafeLoader.add_constructor(u'tag:yaml.org,2002:str', construct_yaml_str)
